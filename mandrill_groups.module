@@ -14,6 +14,7 @@ define('MANDRILL_GROUPS_POSTSCRIPT_FIELD', 'mandrill_groups_postscript');
 define('MANDRILL_GROUPS_GROUP_NODE', 'mandrill_groups_group');
 define('MANDRILL_GROUPS_DISCUSSION_NODE', 'mandrill_groups_discussion');
 define('MANDRILL_GROUPS_MESSAGE_ID_FIELD', 'mandrill_groups_last_message_id');
+define('MANDRILL_GROUPS_MESSAGE_SEPERATOR', "-------- Reply Above This Line --------");
 define('MANDRILL_GROUPS_WEBHOOK_ENDPOINT', 'mandrill/webhook/groups');
 
 /**
@@ -596,6 +597,7 @@ function mandrill_groups_send_email($addresses, $message, $discussion) {
     '@discussion_link' => $discussion_wrapper->url->value(),
     '@settings_link' => $GLOBALS['base_url'] . '/user',
   ));
+  array_unshift($message['body'], MANDRILL_GROUPS_MESSAGE_SEPERATOR . '<br />');
   $message['body'][] = $postscript;
   // Mandrill automatically puts the "From" into "Reply To" and replaces the
   // "From" with the official system email address.
