@@ -461,7 +461,7 @@ function mandrill_groups_process_message($message) {
     return FALSE;
   }
   $comment_body = array(
-    'value' => $message['html'],
+    'value' => _mandrill_groups_filter_reply($message['html']),
     'format' => 'mandrill_groups_html',
   );
   $values = array(
@@ -484,6 +484,22 @@ function mandrill_groups_process_message($message) {
 
   watchdog('mandrill_groups', 'Comment posted: %subject.', array('%subject' => $comment->subject), WATCHDOG_NOTICE, l(t('view'), 'comment/' . $comment->cid, array('fragment' => 'comment-' . $comment->cid)));
   return $comment;
+}
+
+function _mandrill_groups_filter_reply($message) {
+  $reply_line_position = strpos($message, MANDRILL_GROUPS_MESSAGE_SEPERATOR);
+  $quote_tags = variable_get('mandrill_groups_filter_tags', '');
+  $tags_array = explode(',', $quote_tags);
+  foreach ($tags_array as $tag) {
+    $div_tag = '<div class="' . trim($tag) . '">';
+    $reply_line_position = min($reply_line_position, strpos($message, $div_tag));
+  } 
+  $prior_close_tag_position = strrpos($message, '</', $reply_line_position - strlen($message));
+  $next_open_tag_position = strpos($message, '<', $prior_close_tag_position + 2);
+  // @todo replace "substr" with intelligent parsing of html tags to leave
+  // closing of tags at end.
+  $post = substr($message, 0, $next_open_tag_position);
+  return $post;
 }
 
 /**
