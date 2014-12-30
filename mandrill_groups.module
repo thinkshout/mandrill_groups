@@ -45,7 +45,7 @@ function mandrill_groups_menu() {
   );
   $items['node/%node/discussions'] = array(
     'title' => 'Discussions',
-    'page callback' => 'mandrill_groups_node_discussions',
+    'page callback' => 'mandrill_groups_render_node_discussions',
     'page arguments' => array(1),
     'access callback' => 'mandrill_groups_node_discussion_access',
     'access arguments' => array(1),
@@ -118,18 +118,7 @@ function mandrill_groups_node_discussion_access($group) {
  * @return array
  *   An array of rendered discussions for the current Group.
  */
-function mandrill_groups_node_discussions($group) {
-
-  // Construct database query to get all discussions related to the current
-  // Group. Note that use of EFQ here is not advised, as OG alters EFQ queries.
-  $query = db_select('node', 'n');
-  $query->fields('n', array('nid'));
-  $query->leftJoin('field_data_mandrill_groups_og_ref', 'g', 'n.nid = g.entity_id');
-  $query->condition('n.status', NODE_PUBLISHED);
-  $query->condition('g.entity_type', 'node');
-  $query->condition('g.mandrill_groups_og_ref_target_id', $group->nid);
-  $query->orderBy('n.changed', 'DESC');
-  $result = $query->execute();
+function mandrill_groups_render_node_discussions($group) {
 
   // Add link to create discussion if the user has permission to.
   $discussions = array();
@@ -142,7 +131,7 @@ function mandrill_groups_node_discussions($group) {
   }
 
   // Create render array of discussion teasers.
-  foreach ($result as $nid) {
+  foreach (mandrill_groups_load_discussions($group) as $nid) {
     $node = node_load($nid->nid);
     $discussion_teaser = node_view($node, 'teaser');
     $discussions[] = array(
@@ -152,6 +141,24 @@ function mandrill_groups_node_discussions($group) {
   }
 
   return $discussions;
+}
+
+/**
+ * Load all discussions for a specified group.
+ */
+function mandrill_groups_load_discussions($group) {
+// Construct database query to get all discussions related to the current
+// Group. Note that use of EFQ here is not advised, as OG alters EFQ queries.
+
+  $query = db_select('node', 'n');
+  $query->fields('n', array('nid'));
+  $query->leftJoin('field_data_mandrill_groups_og_ref', 'g', 'n.nid = g.entity_id');
+  $query->condition('n.status', NODE_PUBLISHED);
+  $query->condition('g.entity_type', 'node');
+  $query->condition('g.mandrill_groups_og_ref_target_id', $group->nid);
+  $query->orderBy('n.changed', 'DESC');
+  $result = $query->execute();
+  return $result;
 }
 
 /**
