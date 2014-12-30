@@ -16,6 +16,9 @@ define('MANDRILL_GROUPS_DISCUSSION_NODE', 'mandrill_groups_discussion');
 define('MANDRILL_GROUPS_MESSAGE_ID_FIELD', 'mandrill_groups_last_message_id');
 define('MANDRILL_GROUPS_MESSAGE_SEPERATOR', "-------- Reply Above This Line --------");
 define('MANDRILL_GROUPS_WEBHOOK_ENDPOINT', 'mandrill/webhook/groups');
+define('MANDRILL_GROUPS_NOW', 0);
+define('MANDRILL_GROUPS_DAILY', 1); 
+define('MANDRILL_GROUPS_WEEKLY', 2);
 
 /**
  * Implements hook_menu().

@@ -184,9 +184,9 @@ function _mandrill_groups_create_fields() {
       'locked' => TRUE,
       'settings' => array(
         'allowed_values' => array(
-          0 => 'Immediately when comments are added',
-          1 => 'Daily',
-          2 => 'Weekly',
+          MANDRILL_GROUPS_NOW => 'Immediately when comments are added',
+          MANDRILL_GROUPS_DAILY => 'Daily',
+          MANDRILL_GROUPS_WEEKLY => 'Weekly',
         ),
       ),
     ),
