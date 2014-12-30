@@ -577,7 +577,7 @@ function mandrill_groups_comment_insert($comment) {
   $node_wrapper->{MANDRILL_GROUPS_MESSAGE_ID_FIELD}->set($comment->mandrill_groups_message_id);
   $node_wrapper->save();
   // Load active members.
-  $members = $node_wrapper->mandrill_groups_og_ref->members__1->value();
+  $addresses = mandrill_groups_get_subscribers($node_wrapper->mandrill_groups_og_ref->nid->value(), 'node', MANDRILL_GROUPS_NOW);
   // @todo Check subscription data.
   // @todo Check delivery preferences.
   // Create email.
@@ -605,6 +605,27 @@ function mandrill_groups_comment_insert($comment) {
   }
   entity_save('comment', $comment);
   mandrill_groups_send_email($addresses, $message, $node);
+}
+
+/**
+ * Return the email addresses of all members for a mandrill group.
+ *
+ * Specify a frequency to filter the subscribers.
+ */
+function mandrill_groups_get_subscribers($group_id, $group_type = 'node', $frequency = 'any') {
+  $query = db_select('og_membership', 'm');
+  $query->condition('m.type', MANDRILL_GROUPS_MEMBERSHIP_TYPE);
+  $query->condition('m.entity_type', 'user');
+  $query->condition('m.gid', $group_id);
+  $query->condition('m.group_type', $group_type);
+  $query->leftJoin('users', 'u', 'm.etid = u.uid');
+  $query->fields('u');
+  $query->leftJoin('field_data_' . MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD, 'f', 'm.id = f.entity_id');
+  if ($frequency !== 'any') {
+    $query->condition('f.' . MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD . '_value', $frequency);
+  }
+  $result = $query->execute()->fetchAllAssoc('mail');
+  return (array_keys($result));
 }
 
 /**
