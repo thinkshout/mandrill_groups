@@ -698,3 +698,71 @@ function mandrill_groups_form_og_ui_add_users_alter(&$form, &$form_state, $form_
     }
   }
 }
+
+/**
+ * Implements hook_cron().
+ */
+function mandrill_groups_cron() {
+  // debug:
+  variable_set('mandrill_groups_last_daily_send', time() - (60 * 60 * 24 * 5));
+  $now = time();
+  $last_daily = variable_get('mandrill_groups_last_daily_send', $now);
+  $next_daily = $last_daily + (60 * 60 * 24);
+  if (time() >= $next_daily) {
+    mandrill_groups_send_digests($last_daily, $now, 'Daily');
+    variable_set('mandrill_groups_last_daily_send', $next_daily);
+  }
+  $last_weekly = variable_get('mandrill_groups_last_weekly_send', $now);
+  $next_weekly = $last_weekly + (7 * 60 * 60 * 24);
+  if (time() >= $next_weekly) {
+    mandrill_groups_send_digests($last_weekly, $now, 'Weekly');
+    variable_set('mandrill_groups_last_weekly_send', $next_weekly);
+  }
+}
+
+function mandrill_groups_send_digests($from, $to, $interval) {
+  $groups = mandrill_groups_load_by_mail();
+  foreach ($groups as $group) {
+    $addresses = mandrill_groups_get_subscribers($group->nid, 'node', MANDRILL_GROUPS_DAILY);
+    if (!empty($addresses)) {
+      $discussions = mandrill_groups_load_discussions($group);
+      foreach ($discussions as $discussion) {
+        $comments = mandrill_groups_load_comments($discussion->nid, $from, $to);
+        $node = node_load($discussion->nid);
+        $comment_entities = comment_load_multiple(array_keys($comments));
+        comment_prepare_thread($comment_entities);
+        $build = comment_view_multiple($comment_entities, $node);
+        $content = drupal_render($build);
+        $message = array(
+          'id' => MANDRILL_GROUPS_DISCUSSION_NODE,
+          'subject' => $interval . ' Digest: ' . $node->title,
+          'body' => array($content),
+          'mandrill' => array(
+            'header' => array(//'Message-Id' => $comment->mandrill_groups_message_id,
+            ),
+            'from_name' => variable_get('site_name', 'Drupal Site'),
+            'overrides' => array(
+              'preserve_recipients' => FALSE,
+            ),
+          ),
+        );
+        mandrill_groups_send_email($addresses, $message, $node);
+      }
+    }
+  }
+}
+
+function mandrill_groups_load_comments($discussion_id, $from = 0, $to = FALSE, $sort = 'ASC') {
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'comment');
+  $query->propertyCondition('created', $from, '>=');
+  if ($to) {
+    $query->propertyCondition('created', $to, '<');
+  }
+  $query->propertyOrderBy('created', $sort);
+  $results = $query->execute();
+  if (isset($results['comment'])) {
+    return comment_load_multiple(array_keys($results['comment']));
+  }
+  else return array();
+}
