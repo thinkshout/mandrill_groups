@@ -680,3 +680,26 @@ function mandrill_groups_preprocess_comment(&$variables) {
     }
   }
 }
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function mandrill_groups_form_og_ui_add_users_alter(&$form, &$form_state, $form_id) {
+  if ($form['group_type']['#value'] == 'node') {
+    $node = node_load($form['gid']['#value']);
+    if ($node->type == MANDRILL_GROUPS_GROUP_NODE) {
+      $form['og_user']['field_name']['#default_value'] = MANDRILL_GROUPS_OG_REFERENCE_FIELD;
+      $form_state['og_membership']->field_name = MANDRILL_GROUPS_OG_REFERENCE_FIELD;
+      $form_state['og_membership']->type = MANDRILL_GROUPS_MEMBERSHIP_TYPE;
+      if (empty($form_state['input'])) {
+        $form['membership_fields'] = array(
+          '#prefix' => '<div id="og-ui-field-name">',
+          '#suffix' => '</div>',
+          '#tree' => TRUE,
+          '#parents' => array('membership_fields'),
+        );
+        field_attach_form('og_membership', $form_state['og_membership'], $form['membership_fields'], $form_state);
+      }
+    }
+  }
+}
