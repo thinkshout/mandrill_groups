@@ -579,12 +579,7 @@ function mandrill_groups_comment_insert($comment) {
   // Load active members.
   $addresses = mandrill_groups_get_subscribers($node_wrapper->mandrill_groups_og_ref->nid->value(), 'node', MANDRILL_GROUPS_NOW);
   // @todo Check subscription data.
-  // @todo Check delivery preferences.
   // Create email.
-  $addresses = array();
-  foreach ($members as $member) {
-    $addresses[] = $member->mail;
-  }
   $content = field_view_field('comment', $comment, 'comment_body');
   $message = array(
     'id' => MANDRILL_GROUPS_DISCUSSION_NODE,
