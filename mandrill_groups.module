@@ -709,21 +709,21 @@ function mandrill_groups_cron() {
   $last_daily = variable_get('mandrill_groups_last_daily_send', $now);
   $next_daily = $last_daily + (60 * 60 * 24);
   if (time() >= $next_daily) {
-    mandrill_groups_send_digests($last_daily, $now, 'Daily');
+    mandrill_groups_send_digests($last_daily, $now, MANDRILL_GROUPS_DAILY);
     variable_set('mandrill_groups_last_daily_send', $next_daily);
   }
   $last_weekly = variable_get('mandrill_groups_last_weekly_send', $now);
   $next_weekly = $last_weekly + (7 * 60 * 60 * 24);
   if (time() >= $next_weekly) {
     mandrill_groups_send_digests($last_weekly, $now, 'Weekly');
-    variable_set('mandrill_groups_last_weekly_send', $next_weekly);
+    variable_set('mandrill_groups_last_weekly_send', MANDRILL_GROUPS_WEEKLY);
   }
 }
 
 function mandrill_groups_send_digests($from, $to, $interval) {
   $groups = mandrill_groups_load_by_mail();
   foreach ($groups as $group) {
-    $addresses = mandrill_groups_get_subscribers($group->nid, 'node', MANDRILL_GROUPS_DAILY);
+    $addresses = mandrill_groups_get_subscribers($group->nid, 'node', $interval);
     if (!empty($addresses)) {
       $discussions = mandrill_groups_load_discussions($group);
       foreach ($discussions as $discussion) {
@@ -733,9 +733,13 @@ function mandrill_groups_send_digests($from, $to, $interval) {
         comment_prepare_thread($comment_entities);
         $build = comment_view_multiple($comment_entities, $node);
         $content = drupal_render($build);
+        $labels = array(
+          MANDRILL_GROUPS_DAILY => 'Daily ',
+          MANDRILL_GROUPS_WEEKLY => 'Weekly ',
+        );
         $message = array(
           'id' => MANDRILL_GROUPS_DISCUSSION_NODE,
-          'subject' => $interval . ' Digest: ' . $node->title,
+          'subject' => $labels[$interval] . 'Digest: ' . $node->title,
           'body' => array($content),
           'mandrill' => array(
             'header' => array(//'Message-Id' => $comment->mandrill_groups_message_id,
