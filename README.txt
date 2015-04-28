@@ -5,11 +5,10 @@ Drupal UI. Discussions can be participated in via Drupal or email.
 
 -- FEATURES --
 @todo
-The main module provides 'Incoming message is received' event for Rules module with related variables.
 
-Also it has integration with some modules:
-  * Privatemsg - Users will be able reply to private messages by email.
-  * Subscriptions - Users will be able reply to comments by email.
+Integrations with other modules:
+  * Flag - Users can "follow" discussions, prioritizing them in displays, if
+the Flag module is enabled. (https://www.drupal.org/project/flag)
 
 -- REQUIREMENTS --
 
