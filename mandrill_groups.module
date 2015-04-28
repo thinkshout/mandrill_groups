@@ -9,6 +9,7 @@
 define('MANDRILL_GROUPS_OG_REFERENCE_FIELD', 'mandrill_groups_og_ref');
 define('MANDRILL_GROUPS_EMAIL_FIELD', 'mandrill_groups_email');
 define('MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD', 'mandrill_groups_email_frequency');
+define('MANDRILL_GROUPS_SUBJECT_FIELD', 'mandrill_groups_subject_prefix');
 define('MANDRILL_GROUPS_MEMBERSHIP_TYPE', 'mandrill_groups_membership_type');
 define('MANDRILL_GROUPS_POSTSCRIPT_FIELD', 'mandrill_groups_postscript');
 define('MANDRILL_GROUPS_GROUP_NODE', 'mandrill_groups_group');
@@ -218,13 +219,6 @@ function mandrill_groups_schema_alter(&$schema) {
 
 /**
  * Implements hook_form().
- *
- * Drupal needs us to provide a form that lets the user
- * add content. This is the form that the user will see if
- * they go to node/add/node-example.
- *
- * We could get fancy with this form, but we're punting
- * and returning the default form that node_content provides.
  */
 function mandrill_groups_form($node, $form_state) {
   $form = node_content_form($node, $form_state);
@@ -331,7 +325,7 @@ function mandrill_groups_webhook_access() {
     return FALSE;
   }
 
-  $url = $GLOBALS['base_url'] . $_SERVER['REQUEST_URI'];
+  $url = $_SERVER['HTTP_X_FORWARDED_PROTO'] . '://' . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
   $auth_key = NULL;
   $webhooks = mandrill_get_webhooks();
   foreach ($webhooks as $webhook) {
