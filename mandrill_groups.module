@@ -153,6 +153,16 @@ function mandrill_groups_node_discussions($group) {
 }
 
 /**
+ * Implements hook_views_api().
+ */
+function mandrill_groups_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'mandrill_groups') . '/includes',
+  );
+}
+
+/**
  * Implements hook_node_info().
  *
  * We use hook_node_info() to define our node content type.
