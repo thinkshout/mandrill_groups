@@ -326,6 +326,17 @@ function _mandrill_groups_add_field_instances() {
           ),
         ),
       ),
+      'display' => array (
+        'default' => array (
+          'label' => 'above',
+          'type' => 'entityreference_label',
+          'weight' => '1',
+          'settings' => array (
+            'link' => 1,
+          ),
+          'module' => 'entityreference',
+        ),
+      ),
     );
     field_create_instance($group_ref_instance);
     og_create_field(MANDRILL_GROUPS_OG_REFERENCE_FIELD, 'node', MANDRILL_GROUPS_DISCUSSION_NODE);
