@@ -135,7 +135,7 @@ function mandrill_groups_node_discussions($group) {
     // Include group nid in URL to be used in setting default value on Mandrill
     // Discussion node form.
     $discussions['add_discussion'] = array(
-      '#markup' => '<ul class="action-links"><li><a href="/node/add/mandrill-groups-discussion?nid=' . $group->nid . '">Add discussion</a></li></ul>',
+      '#markup' => '<ul class="action-links"><li><a href="/node/add/mandrill-groups-discussion?nid=' . $group->nid . '">Create a discussion</a></li></ul>',
     );
   }
 
