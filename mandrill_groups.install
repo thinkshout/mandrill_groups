@@ -178,6 +178,15 @@ function _mandrill_groups_create_fields() {
         'no_ui' => FALSE,
       ),
     ),
+    MANDRILL_GROUPS_SUBJECT_FIELD => array(
+      'field_name' => MANDRILL_GROUPS_SUBJECT_FIELD,
+      'type' => 'text',
+      'locked' => FALSE,
+      'cardinality' => 1,
+      'settings' => array(
+        'max_length' => '20',
+      ),
+    ),
     MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD => array(
       'field_name' => MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD,
       'type' => 'list_text',
@@ -224,6 +233,22 @@ function _mandrill_groups_add_field_instances() {
       'label' => t('Mandrill Groups Email'),
     );
     field_create_instance($email_field_instance);
+  }
+  // Create instance of group message prefix field on group entity.
+  if (!field_info_instance('node', MANDRILL_GROUPS_SUBJECT_FIELD, MANDRILL_GROUPS_GROUP_NODE)) {
+    $subject_field_instance = array(
+      'entity_type' => 'node',
+      'bundle' => MANDRILL_GROUPS_GROUP_NODE,
+      'field_name' => MANDRILL_GROUPS_SUBJECT_FIELD,
+      'label' => t('Email Subject Prefix'),
+      'display' => array(
+        'default' => array(
+          'type' => 'hidden',
+        ),
+      ),
+      'description' => t('Text to prepend to the email subject for emails in this group. IE: [Groupname]'),
+    );
+    field_create_instance($subject_field_instance);
   }
   if (!field_info_instance('node', MANDRILL_GROUPS_MESSAGE_ID_FIELD, MANDRILL_GROUPS_GROUP_NODE)) {
     $message_id_field_instance = array(
@@ -453,4 +478,15 @@ function _mandrill_groups_add_permissions() {
         ->execute();
     }
   }
+}
+
+
+/**
+ * <Describe here what your update function does>
+ */
+function mandrill_groups_update_7000(&$sandbox) {
+
+  _mandrill_groups_create_fields();
+  // Add fields to our new node types.
+  _mandrill_groups_add_field_instances();
 }
