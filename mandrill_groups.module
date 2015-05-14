@@ -657,3 +657,23 @@ function mandrill_groups_preprocess_comment(&$variables) {
     }
   }
 }
+
+/**
+ * Implements hook_views_pre_view().
+ */
+function mandrill_groups_views_pre_view(&$view, &$display_id, &$args){
+  // Add contextual discussion creation link to custom discussion view tab.
+  if($view->name == 'mandrill_groups_discussions' && $display_id == 'mandrill_groups_discussions') {
+    $link = '<ul class="action-links"><li><a href="/node/add/mandrill-groups-discussion?nid=' . $args[0] . '">Create a discussion</a></li></ul>';
+    $options = array(
+      'id' => 'area',
+      'table' => 'views',
+      'field' => 'area',
+      'empty' => TRUE,
+      'content' => $link,
+      'format' => 'filtered_html',
+      'tokenize' => 0,
+    );
+    $view->display_handler->set_option('header', array('text' => $options));
+  }
+}
