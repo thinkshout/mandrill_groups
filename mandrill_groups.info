@@ -5,6 +5,7 @@ package = Mandrill
 configure = admin/config/services/mandrill/groups
 
 dependencies[] = comment
+dependencies[] = list
 dependencies[] = mandrill
 dependencies[] = og
 dependencies[] = og_ui

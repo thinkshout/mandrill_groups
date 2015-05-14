@@ -10,6 +10,7 @@ define('MANDRILL_GROUPS_OG_REFERENCE_FIELD', 'mandrill_groups_og_ref');
 define('MANDRILL_GROUPS_EMAIL_FIELD', 'mandrill_groups_email');
 define('MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD', 'mandrill_groups_email_frequency');
 define('MANDRILL_GROUPS_SUBJECT_FIELD', 'mandrill_groups_subject_prefix');
+define('MANDRILL_GROUPS_EMAIL_RECIPIENTS_FIELD', 'mandrill_groups_email_recipients');
 define('MANDRILL_GROUPS_MEMBERSHIP_TYPE', 'mandrill_groups_membership_type');
 define('MANDRILL_GROUPS_POSTSCRIPT_FIELD', 'mandrill_groups_postscript');
 define('MANDRILL_GROUPS_GROUP_NODE', 'mandrill_groups_group');
