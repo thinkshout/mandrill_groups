@@ -548,6 +548,22 @@ function mandrill_groups_create_discussion($subject, $group, $user) {
 }
 
 /**
+ * Helper function to figure out who an email reply should be sent to.
+ */
+function _mandrill_groups_get_recipients($comment, EntityMetadataWrapper $node_wrapper) {
+  $addresses = array();
+      // Load active members.
+      $members = $node_wrapper->mandrill_groups_og_ref->members__1->value();
+      // @todo Check subscription data.
+      // @todo Check delivery preferences.
+      // Create email.
+      foreach ($members as $member) {
+        $addresses[] = $member->mail;
+      }
+  return $addresses;
+}
+
+/**
  * Implements hook_comment_insert().
  */
 function mandrill_groups_comment_insert($comment) {
@@ -571,15 +587,7 @@ function mandrill_groups_comment_insert($comment) {
   $comment->mandrill_groups_message_id = '<' . date('YmdHis') . '.' . $comment->cid . '.' . $comment->nid . '@' . $_SERVER['HTTP_HOST'] . '>';
   $node_wrapper->{MANDRILL_GROUPS_MESSAGE_ID_FIELD}->set($comment->mandrill_groups_message_id);
   $node_wrapper->save();
-  // Load active members.
-  $members = $node_wrapper->mandrill_groups_og_ref->members__1->value();
-  // @todo Check subscription data.
-  // @todo Check delivery preferences.
-  // Create email.
-  $addresses = array();
-  foreach ($members as $member) {
-    $addresses[] = $member->mail;
-  }
+  $addresses = _mandrill_groups_get_recipients($comment, $node_wrapper);
   $content = field_view_field('comment', $comment, 'comment_body');
   $message = array(
     'id' => MANDRILL_GROUPS_DISCUSSION_NODE,
