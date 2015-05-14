@@ -612,8 +612,14 @@ function mandrill_groups_comment_insert($comment) {
   }
   // Mandrill automatically puts the "From" into "Reply To" and replaces the
   // "From" with the official system email address.
+  if ($node_wrapper->mandrill_groups_og_ref->{MANDRILL_GROUPS_EMAIL_REPLY_TO}->value() == 'sender' && isset($author->mail)) {
+    $from = $author->mail;
+  }
+  else {
     list($from_user, $from_domain) = explode('@', $node_wrapper->mandrill_groups_og_ref->mandrill_groups_email->value());
     $from = $from_user . '+MGD' . $node_wrapper->getIdentifier() . '@' . $from_domain;
+  }
+
   entity_save('comment', $comment);
   mandrill_groups_send_email($addresses, $message, $node, $from);
 }
