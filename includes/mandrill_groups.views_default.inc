@@ -10,7 +10,7 @@
 function mandrill_groups_views_default_views() {
   // Begin copy and paste of output from the Export tab of a view.
   $view = new view();
-  $view->name = 'discussions';
+  $view->name = 'mandrill_groups_discussions';
   $view->description = '';
   $view->tag = 'default';
   $view->base_table = 'node';
