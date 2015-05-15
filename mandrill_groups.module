@@ -13,6 +13,7 @@ define('MANDRILL_GROUPS_SUBJECT_FIELD', 'mandrill_groups_subject_prefix');
 define('MANDRILL_GROUPS_EMAIL_REPLY_TO', 'mandrill_groups_email_reply_to');
 define('MANDRILL_GROUPS_MEMBERSHIP_TYPE', 'mandrill_groups_membership_type');
 define('MANDRILL_GROUPS_POSTSCRIPT_FIELD', 'mandrill_groups_postscript');
+define('MANDRILL_GROUPS_ATTACHMENT_FIELD', 'field_attachment');
 define('MANDRILL_GROUPS_GROUP_NODE', 'mandrill_groups_group');
 define('MANDRILL_GROUPS_DISCUSSION_NODE', 'mandrill_groups_discussion');
 define('MANDRILL_GROUPS_MESSAGE_ID_FIELD', 'mandrill_groups_last_message_id');
@@ -575,6 +576,7 @@ function mandrill_groups_comment_insert($comment) {
   // Load parent group.
   $node = node_load($comment->nid);
   $node_wrapper = entity_metadata_wrapper('node', $node);
+  $comment_wrapper = entity_metadata_wrapper('comment', $comment);
   // We want to set the reply-to header to match a previous message sent from
   // this system for threading purposes.
   $reply_to_id = $node_wrapper->{MANDRILL_GROUPS_MESSAGE_ID_FIELD}->value();
@@ -620,6 +622,29 @@ function mandrill_groups_comment_insert($comment) {
     $from = $from_user . '+MGD' . $node_wrapper->getIdentifier() . '@' . $from_domain;
   }
 
+  // Check for attachments:
+  if ($comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD} && count($comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->value())) {
+    $attachment_field_info = $comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->info();
+    if ($attachment_field_info['field']['cardinality'] == 1) {
+      $attachment_values = array($comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->value());
+    }
+    else {
+      $attachment_values = $comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->value();
+    }
+    $message['attachments'] = array();
+    foreach ($attachment_values as $file_info) {
+      $file = file_load($file_info['fid']);
+      $label = empty($file_info['description']) ? $file->filename : $file_info['description'];
+      if ($file->filesize < 5000000) {
+        $message['attachments'][] = array(
+          'uri' => $file->uri,
+        );
+      }
+      else {
+        $message['body'][] = l($label, file_create_url($file->uri)) . '<br />';
+      }
+    }
+  }
   entity_save('comment', $comment);
   mandrill_groups_send_email($addresses, $message, $node, $from);
 }
