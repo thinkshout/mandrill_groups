@@ -484,6 +484,16 @@ function mandrill_groups_process_message($message) {
   $comment = entity_create('comment', $values);
   $wrapper = entity_metadata_wrapper('comment', $comment);
   $wrapper->comment_body->set($comment_body);
+  if (isset($message['attachments'])) {
+    $files = array();
+    foreach ($message['attachments'] as $filename => $attachment) {
+      $location = file_build_uri('mandrill_groups/' . $attachment['name']);
+      $files[] = file_save_data($attachment['content'], $location);
+    }
+    foreach($files as $id => $file) {
+      $wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}[$id]->file->set($file);
+    }
+  }
   // If you use more standard save methodology, the comment gets lost, so:
   comment_submit($comment);
   comment_save($comment);
@@ -608,7 +618,6 @@ function mandrill_groups_comment_insert($comment) {
   if (isset($node_wrapper->mandrill_groups_og_ref->{MANDRILL_GROUPS_SUBJECT_FIELD})) {
     $message['subject'] = $node_wrapper->mandrill_groups_og_ref->{MANDRILL_GROUPS_SUBJECT_FIELD}->value() . $message['subject'];
   }
-
   if (!empty($reply_to_id)) {
     $message['mandrill']['header']['In-Reply-To'] = $reply_to_id;
   }
