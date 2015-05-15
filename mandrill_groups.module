@@ -553,14 +553,14 @@ function mandrill_groups_create_discussion($subject, $group, $user) {
  */
 function _mandrill_groups_get_recipients($comment, EntityMetadataWrapper $node_wrapper) {
   $addresses = array();
-      // Load active members.
-      $members = $node_wrapper->mandrill_groups_og_ref->members__1->value();
-      // @todo Check subscription data.
-      // @todo Check delivery preferences.
-      // Create email.
-      foreach ($members as $member) {
-        $addresses[] = $member->mail;
-      }
+  // Load active members.
+  $members = $node_wrapper->mandrill_groups_og_ref->members__1->value();
+  // @todo Check subscription data.
+  // @todo Check delivery preferences.
+  // Create email.
+  foreach ($members as $member) {
+    $addresses[] = $member->mail;
+  }
   return $addresses;
 }
 
