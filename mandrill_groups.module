@@ -487,7 +487,7 @@ function mandrill_groups_process_message($message) {
   if (isset($message['attachments'])) {
     $files = array();
     foreach ($message['attachments'] as $filename => $attachment) {
-      $location = file_build_uri('mandrill_groups/' . $attachment['name']);
+      $location = file_build_uri('mandrill_groups/' . $discussion_wrapper->label() . '/' . $attachment['name']);
       $files[] = file_save_data($attachment['content'], $location);
     }
     foreach($files as $id => $file) {
