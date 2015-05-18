@@ -13,7 +13,7 @@ define('MANDRILL_GROUPS_SUBJECT_FIELD', 'mandrill_groups_subject_prefix');
 define('MANDRILL_GROUPS_EMAIL_REPLY_TO', 'mandrill_groups_email_reply_to');
 define('MANDRILL_GROUPS_MEMBERSHIP_TYPE', 'mandrill_groups_membership_type');
 define('MANDRILL_GROUPS_POSTSCRIPT_FIELD', 'mandrill_groups_postscript');
-define('MANDRILL_GROUPS_ATTACHMENT_FIELD', 'field_attachment');
+define('MANDRILL_GROUPS_ATTACHMENT_FIELD', 'mandrill_groups_attachments');
 define('MANDRILL_GROUPS_GROUP_NODE', 'mandrill_groups_group');
 define('MANDRILL_GROUPS_DISCUSSION_NODE', 'mandrill_groups_discussion');
 define('MANDRILL_GROUPS_MESSAGE_ID_FIELD', 'mandrill_groups_last_message_id');

@@ -201,6 +201,15 @@ function _mandrill_groups_create_fields() {
         'allowed_values_function' => '',
       ),
     ),
+    MANDRILL_GROUPS_ATTACHMENT_FIELD => array(
+      'field_name' => MANDRILL_GROUPS_ATTACHMENT_FIELD,
+      'type' => 'file',
+      'locked' => FALSE,
+      'cardinality' => -1,
+      'settings' => array(
+        'active' => TRUE,
+      ),
+    ),
     MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD => array(
       'field_name' => MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD,
       'type' => 'list_text',
@@ -422,6 +431,32 @@ function _mandrill_groups_add_field_instances() {
       'default_value' => array(array('value' => 0)),
     );
     field_create_instance($email_frequency_field_instance);
+  }
+  // Create instance of attachment field for comments in discussions.
+  if (!field_info_instance('comment', MANDRILL_GROUPS_ATTACHMENT_FIELD, 'comment_node_' . MANDRILL_GROUPS_DISCUSSION_NODE)) {
+    $attachment_field_instance = array(
+      'entity_type' => 'comment',
+      'bundle' => 'comment_node_' . MANDRILL_GROUPS_DISCUSSION_NODE,
+      'field_name' => MANDRILL_GROUPS_ATTACHMENT_FIELD,
+      'label' => t('Attachments'),
+      'required' => FALSE,
+      'settings' => array (
+        'file_directory' => 'mandrill_groups/[current-page:title]',
+        'file_extensions' => 'txt pdf jpg jpeg gif png xls xlsx doc docx rtf',
+        'max_filesize' => '16 MB',
+        'description_field' => 1,
+      ),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'type' => 'file_default',
+          'settings' => array(),
+          'module' => 'file',
+          'weight' => 1,
+        ),
+      ),
+    );
+    field_create_instance($attachment_field_instance);
   }
   // Update display field formatter for the OG group field on our Mandrill Group
   // content type.
