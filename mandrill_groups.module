@@ -658,13 +658,7 @@ function mandrill_groups_comment_insert($comment) {
 
   // Check for attachments:
   if ($comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD} && count($comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->value())) {
-    $attachment_field_info = $comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->info();
-    if ($attachment_field_info['field']['cardinality'] == 1) {
-      $attachment_values = array($comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->value());
-    }
-    else {
-      $attachment_values = $comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->value();
-    }
+    $attachment_values = $comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->value();
     $message['attachments'] = array();
     foreach ($attachment_values as $file_info) {
       $file = file_load($file_info['fid']);
