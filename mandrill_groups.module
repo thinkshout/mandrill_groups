@@ -482,17 +482,42 @@ function mandrill_groups_process_message($message) {
     'mandrill_groups_original_msg_id' => isset($message['headers']['Message-Id']) ? $message['headers']['Message-Id'] : NULL,
   );
   $comment = entity_create('comment', $values);
-  $wrapper = entity_metadata_wrapper('comment', $comment);
-  $wrapper->comment_body->set($comment_body);
+  $comment_wrapper = entity_metadata_wrapper('comment', $comment);
+  $comment_wrapper->comment_body->set($comment_body);
+  $files = array();
+  // Mandrill sends attachments in two slightly different arrays, so we must
+  // check them both (https://mandrill.zendesk.com/hc/en-us/articles/205583207-What-is-the-format-of-inbound-email-webhooks-):
   if (isset($message['attachments'])) {
-    $files = array();
     foreach ($message['attachments'] as $filename => $attachment) {
       $location = file_build_uri('mandrill_groups/' . $discussion_wrapper->label() . '/' . $attachment['name']);
-      $files[] = file_save_data($attachment['content'], $location);
+      $file = file_save_data($attachment['content'], $location);
+      if (isset($attachment['type'])) {
+        $file->filemime = $attachment['type'];
+        file_save($file);
+      }
+      $files[] = $file;
     }
-    foreach($files as $id => $file) {
-      $wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}[$id]->file->set($file);
-    }
+  }
+  if (isset($message['images'])) {
+    // @todo this code doesn't work, because of issues with the saved file's
+    // @todo name, so that getAttachmentStruct() gets a bad mimetype. Also, the
+    // @todo name offered in the 'images' array isn't the real filename.
+//    foreach ($message['images'] as $filename => $attachment) {
+//      // Don't save images that are incidentally included in reply-quotes:
+//      if (is_int(strpos($comment_body['value'], $filename))) {
+//        $location = file_build_uri('mandrill_groups/' . $discussion_wrapper->label() . '/' . $attachment['name']);
+//        $file = file_save_data($attachment['content'], $location);
+//        if (isset($attachment['type'])) {
+//          $file->filemime = $attachment['type'];
+//          file_save($file);
+//        }
+//        $files[] = $file;
+//      }
+//    }
+  }
+  // Now that we have all our files, attach them to our comment.
+  foreach($files as $id => $file) {
+    $comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}[$id]->file->set($file);
   }
   // If you use more standard save methodology, the comment gets lost, so:
   comment_submit($comment);
