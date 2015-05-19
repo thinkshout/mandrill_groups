@@ -201,6 +201,15 @@ function _mandrill_groups_create_fields() {
         'allowed_values_function' => '',
       ),
     ),
+    MANDRILL_GROUPS_ATTACHMENT_SENDLIMIT => array(
+      'field_name' => MANDRILL_GROUPS_ATTACHMENT_SENDLIMIT,
+      'type' => 'number_float',
+      'locked' => TRUE,
+      'cardinality' => 1,
+      'settings' => array(
+        'decimal_separator' => '.',
+      ),
+    ),
     MANDRILL_GROUPS_ATTACHMENT_FIELD => array(
       'field_name' => MANDRILL_GROUPS_ATTACHMENT_FIELD,
       'type' => 'file',
@@ -295,6 +304,34 @@ function _mandrill_groups_add_field_instances() {
       'description' => t('When replying to group emails, who should the email go to?'),
     );
     field_create_instance($recipient_field_instance);
+  }
+  // Create instance of attachment send limit field on group entity.
+  if (!field_info_instance('node', MANDRILL_GROUPS_ATTACHMENT_SENDLIMIT, MANDRILL_GROUPS_GROUP_NODE)) {
+    $attach_limit_field_instance = array(
+      'entity_type' => 'node',
+      'bundle' => MANDRILL_GROUPS_GROUP_NODE,
+      'field_name' => MANDRILL_GROUPS_ATTACHMENT_SENDLIMIT,
+      'label' => t('Attachment Send Limit'),
+      'widget' => array(
+        'type' => 'number',
+        'module' => 'number',
+      ),
+      'settings' => array(
+        'min' => '',
+        'max' => '',
+        'prefix' => '',
+        'suffix' => 'MB',
+      ),
+      'display' => array(
+        'default' => array(
+          'type' => 'hidden',
+        ),
+      ),
+      'required' => 1,
+      'default_value' => array(array('value' => '5')),
+      'description' => t('Any comment attachments larger than this size will not be attached to outgoing emails. Instead, a link to the file on the site will be included in the email.'),
+    );
+    field_create_instance($attach_limit_field_instance);
   }
   if (!field_info_instance('node', MANDRILL_GROUPS_MESSAGE_ID_FIELD, MANDRILL_GROUPS_DISCUSSION_NODE)) {
     $message_id_field_instance = array(
