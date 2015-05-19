@@ -527,6 +527,9 @@ function mandrill_groups_process_message($message) {
   return $comment;
 }
 
+/**
+ * Helper function to strip off all the reply-quote leftovers emails include.
+ */
 function _mandrill_groups_filter_reply($message) {
   $reply_line_position = strpos($message, MANDRILL_GROUPS_MESSAGE_SEPERATOR);
   $quote_tags = variable_get('mandrill_groups_filter_tags', '');
