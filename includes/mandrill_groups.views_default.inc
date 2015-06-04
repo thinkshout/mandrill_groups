@@ -21,7 +21,7 @@ function mandrill_groups_views_default_views() {
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
-  $handler->display->display_options['title'] = t('Discussions');
+  $handler->display->display_options['title'] = 'Discussions';
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['cache']['type'] = 'none';
@@ -75,7 +75,7 @@ function mandrill_groups_views_default_views() {
   $handler->display->display_options['relationships']['flag_content_rel']['id'] = 'flag_content_rel';
   $handler->display->display_options['relationships']['flag_content_rel']['table'] = 'node';
   $handler->display->display_options['relationships']['flag_content_rel']['field'] = 'flag_content_rel';
-  $handler->display->display_options['relationships']['flag_content_rel']['label'] = t('following');
+  $handler->display->display_options['relationships']['flag_content_rel']['label'] = 'following';
   $handler->display->display_options['relationships']['flag_content_rel']['required'] = 0;
   $handler->display->display_options['relationships']['flag_content_rel']['flag'] = 'follow';
   /* Field: Content: Title */
@@ -88,12 +88,12 @@ function mandrill_groups_views_default_views() {
   $handler->display->display_options['fields']['comment_count']['id'] = 'comment_count';
   $handler->display->display_options['fields']['comment_count']['table'] = 'node_comment_statistics';
   $handler->display->display_options['fields']['comment_count']['field'] = 'comment_count';
-  $handler->display->display_options['fields']['comment_count']['label'] = t('Comments');
+  $handler->display->display_options['fields']['comment_count']['label'] = 'Comments';
   /* Field: Content: Updated/commented date */
   $handler->display->display_options['fields']['last_updated']['id'] = 'last_updated';
   $handler->display->display_options['fields']['last_updated']['table'] = 'node_comment_statistics';
   $handler->display->display_options['fields']['last_updated']['field'] = 'last_updated';
-  $handler->display->display_options['fields']['last_updated']['label'] = t('Last Comment');
+  $handler->display->display_options['fields']['last_updated']['label'] = 'Last Comment';
   $handler->display->display_options['fields']['last_updated']['date_format'] = 'today time ago';
   $handler->display->display_options['fields']['last_updated']['custom_date_format'] = 'j/n/Y G:i';
   $handler->display->display_options['fields']['last_updated']['second_date_format_custom'] = 'j/n/Y G:i';
@@ -126,6 +126,12 @@ function mandrill_groups_views_default_views() {
   $handler->display->display_options['sorts']['title']['field'] = 'title';
   $handler->display->display_options['sorts']['title']['exposed'] = TRUE;
   $handler->display->display_options['sorts']['title']['expose']['label'] = 'Title';
+  /* Sort criterion: Content: Last comment time */
+  $handler->display->display_options['sorts']['last_comment_timestamp']['id'] = 'last_comment_timestamp';
+  $handler->display->display_options['sorts']['last_comment_timestamp']['table'] = 'node_comment_statistics';
+  $handler->display->display_options['sorts']['last_comment_timestamp']['field'] = 'last_comment_timestamp';
+  $handler->display->display_options['sorts']['last_comment_timestamp']['exposed'] = TRUE;
+  $handler->display->display_options['sorts']['last_comment_timestamp']['expose']['label'] = 'Last comment time';
   /* Contextual filter: Field: Mandrill Group Membership (mandrill_groups_og_ref) */
   $handler->display->display_options['arguments']['mandrill_groups_og_ref_target_id']['id'] = 'mandrill_groups_og_ref_target_id';
   $handler->display->display_options['arguments']['mandrill_groups_og_ref_target_id']['table'] = 'field_data_mandrill_groups_og_ref';
@@ -162,7 +168,7 @@ function mandrill_groups_views_default_views() {
   $handler = $view->new_display('page', 'Discussion Summary Page', 'mandrill_groups_discussions');
   $handler->display->display_options['path'] = 'node/%/discussions';
   $handler->display->display_options['menu']['type'] = 'tab';
-  $handler->display->display_options['menu']['title'] = t('Discussions');
+  $handler->display->display_options['menu']['title'] = 'Discussions';
   $handler->display->display_options['menu']['weight'] = '0';
   $handler->display->display_options['menu']['context'] = 0;
   $handler->display->display_options['menu']['context_only_inline'] = 0;
