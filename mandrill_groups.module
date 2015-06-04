@@ -604,7 +604,7 @@ function mandrill_groups_comment_insert($comment) {
     ),
   );
   if (isset($node_wrapper->mandrill_groups_og_ref->{MANDRILL_GROUPS_SUBJECT_FIELD})) {
-    $message['subject'] = $node_wrapper->mandrill_groups_og_ref->{MANDRILL_GROUPS_SUBJECT_FIELD}->value() . $message['subject'];
+    $message['subject'] = $node_wrapper->mandrill_groups_og_ref->{MANDRILL_GROUPS_SUBJECT_FIELD}->value() . ' ' . $message['subject'];
   }
 
   if (!empty($reply_to_id)) {
