@@ -49,6 +49,16 @@ function mandrill_groups_menu() {
     'access arguments' => array('administer mandrill'),
     'file' => 'includes/mandrill_groups.admin.inc',
   );
+  $items['node/%node/add_mandrill_groups_discussion'] = array(
+    'title' => 'Create a discussion',
+    'type' => MENU_LOCAL_ACTION,
+    'page callback' => 'node_add',
+    'page arguments' => array('mandrill_groups_discussion'),
+    'access callback' => array('mandrill_groups_node_discussion_access'),
+    'access arguments' => array(1),
+    'file path' => 'modules/node',
+    'file' => 'node.pages.inc',
+  );
 
   return $items;
 }
