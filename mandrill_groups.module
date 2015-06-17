@@ -267,7 +267,7 @@ function mandrill_groups_process_webhook() {
 
 /**
  * Validate that a webhook with post data is coming from Mandrill.
- * 
+ *
  * See http://help.mandrill.com/entries/23704122-Authenticating-webhook-requests
  */
 function mandrill_groups_webhook_access() {
@@ -414,6 +414,12 @@ function mandrill_groups_process_message($message) {
   return $comment;
 }
 
+/**
+ *
+ * @param string $message
+ *
+ * @return string
+ */
 function _mandrill_groups_filter_reply($message) {
   $reply_line_position = strpos($message, MANDRILL_GROUPS_MESSAGE_SEPERATOR);
   $quote_tags = variable_get('mandrill_groups_filter_tags', '');
@@ -433,7 +439,7 @@ function _mandrill_groups_filter_reply($message) {
 /**
  * Load a Mandrill group node based on the group email.
  *
- * @return node[]
+ * @return object|array
  *   Depending whether $email is set, an array of groups or a single one.
  */
 function mandrill_groups_load_by_mail($email = NULL) {
@@ -595,5 +601,4 @@ function mandrill_groups_preprocess_comment(&$variables) {
       $variables['title_attributes_array']['class'][] = 'element-invisible';
     }
   }
-}
 }
