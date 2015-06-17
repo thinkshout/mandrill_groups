@@ -42,16 +42,6 @@ function mandrill_groups_menu() {
     'access callback' => array('mandrill_groups_webhook_access'),
     'type' => MENU_CALLBACK,
   );
-  $items['node/%node/discussions'] = array(
-    'title' => 'Discussions',
-    'page callback' => 'mandrill_groups_node_discussions',
-    'page arguments' => array(1),
-    'access callback' => 'mandrill_groups_node_discussion_access',
-    'access arguments' => array(1),
-    'weight' => 0,
-    'type' => MENU_LOCAL_TASK,
-    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
-  );
   $items['admin/config/services/mandrill/groups/%/delete'] = array(
     'title' => 'Delete Inbound Domain Form',
     'page callback' => 'drupal_get_form',
@@ -109,49 +99,6 @@ function mandrill_groups_node_discussion_access($group) {
 }
 
 /**
- * Get all discussions for the current Group.
- *
- * @param array $group
- *   The group that is currently being viewed.
- *
- * @return array
- *   An array of rendered discussions for the current Group.
- */
-function mandrill_groups_node_discussions($group) {
-
-  // Construct database query to get all discussions related to the current
-  // Group. Note that use of EFQ here is not advised, as OG alters EFQ queries.
-  $query = db_select('node', 'n');
-  $query->fields('n', array('nid'));
-  $query->leftJoin('field_data_mandrill_groups_og_ref', 'g', 'n.nid = g.entity_id');
-  $query->condition('n.status', NODE_PUBLISHED);
-  $query->condition('g.entity_type', 'node');
-  $query->condition('g.mandrill_groups_og_ref_target_id', $group->nid);
-  $query->orderBy('n.changed', 'DESC');
-  $result = $query->execute();
-
-  // Add link to create discussion if the user has permission to.
-  $discussions = array();
-  if (og_user_access('node', $group->nid, 'create ' . MANDRILL_GROUPS_DISCUSSION_NODE . ' content')) {
-    // Include group nid in URL to be used in setting default value on Mandrill
-    // Discussion node form.
-    $discussions['add_discussion'] = array(
-      '#markup' => '<ul class="action-links"><li><a href="/node/add/mandrill-groups-discussion?nid=' . $group->nid . '">Create a discussion</a></li></ul>',
-    );
-  }
-
-  // Create render array of discussion teasers.
-  foreach ($result as $nid) {
-    $node = node_load($nid->nid);
-    $discussion_teaser = node_view($node, 'teaser');
-    $discussions[] = array(
-      '#type' => 'markup',
-      '#markup' => render($discussion_teaser),
-    );
-  }
-
-  return $discussions;
-}
 
 /**
  * Implements hook_views_api().
