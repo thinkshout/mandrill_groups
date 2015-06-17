@@ -281,7 +281,8 @@ function mandrill_groups_webhook_access() {
     return FALSE;
   }
 
-  $url = $_SERVER['HTTP_X_FORWARDED_PROTO'] . '://' . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
+  global $base_url;
+  $url = $base_url . $_SERVER['REQUEST_URI'];
   $auth_key = NULL;
   $webhooks = mandrill_get_webhooks();
   foreach ($webhooks as $webhook) {
