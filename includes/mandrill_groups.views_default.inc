@@ -181,6 +181,6 @@ function mandrill_groups_views_default_views() {
   // ...Repeat all of the above for each view the module should provide.
 
   // At the end, return array of default views.
-  return $views;
+//  return $views;
   
 }
