@@ -378,7 +378,7 @@ function mandrill_groups_process_message($message) {
   $discussion = $discussion_id ? node_load($discussion_id) : mandrill_groups_create_discussion($message['subject'], $group, $user);
   $discussion_wrapper = entity_metadata_wrapper('node', $discussion);
   // Verify the discussion matches the group attached to this email address:
-  if ($group->nid != $discussion_wrapper->{MANDRILL_GROUPS_OG_REFERENCE_FIELD}->raw()) {
+  if ($group->nid != $discussion_wrapper->{MANDRILL_GROUPS_OG_REFERENCE_FIELD}[0]->raw()) {
     // Trying to post to a discussion using wrong group email.
     watchdog('mandrill_groups', 'Message from %email for discussion %discussion denied because the wrong targeting email was used (%groupemail)',
       array(
