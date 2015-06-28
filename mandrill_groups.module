@@ -485,12 +485,15 @@ function mandrill_groups_comment_insert($comment) {
   }
   // Load posting user:
   $author = user_load($comment->uid);
-  // Load parent group.
+
+  // Load parent node.
   $node = node_load($comment->nid);
   $node_wrapper = entity_metadata_wrapper('node', $node);
+
   // We want to set the reply-to header to match a previous message sent from
   // this system for threading purposes.
   $reply_to_id = $node_wrapper->{MANDRILL_GROUPS_MESSAGE_ID_FIELD}->value();
+
   // If this is the first message, and no ID is available, we set the reply-to
   // to be the initializing email message ID for the benefit of the person who
   // created this email.
@@ -500,7 +503,22 @@ function mandrill_groups_comment_insert($comment) {
   $comment->mandrill_groups_message_id = '<' . date('YmdHis') . '.' . $comment->cid . '.' . $comment->nid . '@' . $_SERVER['HTTP_HOST'] . '>';
   $node_wrapper->{MANDRILL_GROUPS_MESSAGE_ID_FIELD}->set($comment->mandrill_groups_message_id);
   $node_wrapper->save();
-  $addresses = _mandrill_groups_get_recipients($comment, $node_wrapper);
+
+  // Grab our group.
+  $group = current($node_wrapper->{MANDRILL_GROUPS_OG_REFERENCE_FIELD}->value());
+  $group_wrapper = entity_metadata_wrapper('node', $group);
+
+  // Load active members.
+  $members = $group_wrapper->{'members__' . OG_STATE_ACTIVE}->value();
+
+  // @todo Check subscription data.
+  // @todo Check delivery preferences.
+  // Gather emails.
+  $addresses = array();
+  foreach ($members as $member) {
+    $addresses[] = $member->mail;
+  }
+
   $content = field_view_field('comment', $comment, 'comment_body');
   $message = array(
     'id' => MANDRILL_GROUPS_DISCUSSION_NODE,
@@ -516,8 +534,8 @@ function mandrill_groups_comment_insert($comment) {
       ),
     ),
   );
-  if (isset($node_wrapper->mandrill_groups_og_ref->{MANDRILL_GROUPS_SUBJECT_FIELD})) {
-    $message['subject'] = $node_wrapper->mandrill_groups_og_ref->{MANDRILL_GROUPS_SUBJECT_FIELD}->value() . ' ' . $message['subject'];
+  if (isset($group_wrapper->{MANDRILL_GROUPS_SUBJECT_FIELD})) {
+    $message['subject'] = $group_wrapper->{MANDRILL_GROUPS_SUBJECT_FIELD}->value() . ' ' . $message['subject'];
   }
 
   if (!empty($reply_to_id)) {
@@ -525,11 +543,11 @@ function mandrill_groups_comment_insert($comment) {
   }
   // Mandrill automatically puts the "From" into "Reply To" and replaces the
   // "From" with the official system email address.
-  if ($node_wrapper->mandrill_groups_og_ref->{MANDRILL_GROUPS_EMAIL_REPLY_TO}->value() == 'sender' && isset($author->mail)) {
+  if ($group_wrapper->{MANDRILL_GROUPS_EMAIL_REPLY_TO}->value() == 'sender' && isset($author->mail)) {
     $from = $author->mail;
   }
   else {
-    list($from_user, $from_domain) = explode('@', $node_wrapper->mandrill_groups_og_ref->mandrill_groups_email->value());
+    list($from_user, $from_domain) = explode('@', $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value());
     $from = $from_user . '+MGD' . $node_wrapper->getIdentifier() . '@' . $from_domain;
   }
 
