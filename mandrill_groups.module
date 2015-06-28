@@ -563,11 +563,15 @@ function mandrill_groups_comment_insert($comment) {
  */
 function mandrill_groups_send_email($addresses, $message, $discussion, $from) {
   $discussion_wrapper = entity_metadata_wrapper('node', $discussion);
-  $postscript = format_string($discussion_wrapper->mandrill_groups_og_ref->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), array(
-    '@group_name' => $discussion_wrapper->mandrill_groups_og_ref->label(),
+  // Grab our group.
+  $group = current($discussion_wrapper->{MANDRILL_GROUPS_OG_REFERENCE_FIELD}->value());
+  $group_wrapper = entity_metadata_wrapper('node', $group);
+
+  $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), array(
+    '@group_name' => $group_wrapper->label(),
     '@site_name' => variable_get('site_name'),
-    '@group_email' => $discussion_wrapper->mandrill_groups_og_ref->mandrill_groups_email->value(),
-    '@group_link' => $discussion_wrapper->mandrill_groups_og_ref->url->value(),
+    '@group_email' => $group_wrapper->mandrill_groups_email->value(),
+    '@group_link' => $group_wrapper->url->value(),
     '@discussion_link' => $discussion_wrapper->url->value(),
     '@settings_link' => $GLOBALS['base_url'] . '/user',
   ));
