@@ -18,6 +18,14 @@ function mandrill_groups_install() {
   _mandrill_groups_create_fields();
   // Add fields to our new node types.
   _mandrill_groups_add_field_instances();
+
+  // @todo: Use the following API call rather than creating our fields just
+  // using the Field API.
+  // og_create_field('group_group', 'node', 'mandrill_groups_group');
+
+  // Add OG's Content Access field so we can limit discussions to group members.
+  og_create_field('group_content_access', 'node', 'mandrill_groups_discussion');
+
   // Add database columns for comment properties.
   _mandrill_groups_add_comment_properties();
   // Add permissions for OG node types.
