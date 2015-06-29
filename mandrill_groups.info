@@ -9,3 +9,4 @@ dependencies[] = list
 dependencies[] = mandrill
 dependencies[] = og
 dependencies[] = og_ui
+dependencies[] = og_access
