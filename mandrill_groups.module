@@ -181,7 +181,7 @@ function mandrill_groups_form($node, $form_state) {
   if ($node->type == MANDRILL_GROUPS_GROUP_NODE) {
     if (isset($node->nid)) {
       $node_wrapper = entity_metadata_wrapper('node', $node);
-      list($default_name, $default_domain) = explode('@', $node_wrapper->mandrill_groups_email->value());
+      list($default_name, $default_domain) = explode('@', $node_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value());
     }
     $form['email_user'] = array(
       '#type' => 'machine_name',
@@ -223,8 +223,8 @@ function mandrill_groups_form($node, $form_state) {
 function mandrill_groups_form_mandrill_groups_group_node_form_alter(&$form, &$form_state, $form_id) {
   // Hide the group email field, which is being built from other form elements
   // added in mandrill_groups_form().
-  $form['mandrill_groups_email']['#access'] = FALSE;
   $form['#validate'][] = 'mandrill_groups_apply_form_settings';
+  $form[MANDRILL_GROUPS_EMAIL_FIELD]['#access'] = FALSE;
 }
 
 /**
@@ -570,7 +570,7 @@ function mandrill_groups_send_email($addresses, $message, $discussion, $from) {
   $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), array(
     '@group_name' => $group_wrapper->label(),
     '@site_name' => variable_get('site_name'),
-    '@group_email' => $group_wrapper->mandrill_groups_email->value(),
+    '@group_email' => $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value(),
     '@group_link' => $group_wrapper->url->value(),
     '@discussion_link' => $discussion_wrapper->url->value(),
     '@settings_link' => $GLOBALS['base_url'] . '/user',
