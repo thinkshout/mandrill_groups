@@ -189,7 +189,7 @@ function _mandrill_groups_create_fields() {
     MANDRILL_GROUPS_SUBJECT_FIELD => array(
       'field_name' => MANDRILL_GROUPS_SUBJECT_FIELD,
       'type' => 'text',
-      'locked' => FALSE,
+      'locked' => TRUE,
       'cardinality' => 1,
       'settings' => array(
         'max_length' => '20',
@@ -198,7 +198,7 @@ function _mandrill_groups_create_fields() {
     MANDRILL_GROUPS_EMAIL_REPLY_TO => array(
       'field_name' => MANDRILL_GROUPS_EMAIL_REPLY_TO,
       'type' => 'list_text',
-      'locked' => FALSE,
+      'locked' => TRUE,
       'cardinality' => 1,
       'settings' => array(
         'allowed_values' =>
@@ -224,7 +224,7 @@ function _mandrill_groups_create_fields() {
     MANDRILL_GROUPS_POSTSCRIPT_FIELD => array(
       'field_name' => MANDRILL_GROUPS_POSTSCRIPT_FIELD,
       'type' => 'text_long',
-      'locked' => FALSE,
+      'locked' => TRUE,
     ),
     MANDRILL_GROUPS_MESSAGE_ID_FIELD => array(
       'field_name' => MANDRILL_GROUPS_MESSAGE_ID_FIELD,
