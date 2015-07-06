@@ -526,6 +526,7 @@ function mandrill_groups_comment_insert($comment) {
     'mandrill' => array(
       'header' => array(
         'Message-Id' => $comment->mandrill_groups_message_id,
+        'Precedence' => 'List',
       ),
       'from_name' => $author->name . ' via ' . variable_get('site_name', 'Drupal Site'),
       'overrides' => array(
