@@ -18,6 +18,7 @@ define('MANDRILL_GROUPS_DISCUSSION_NODE', 'mandrill_groups_discussion');
 define('MANDRILL_GROUPS_MESSAGE_ID_FIELD', 'mandrill_groups_last_message_id');
 define('MANDRILL_GROUPS_MESSAGE_SEPERATOR', "-------- Reply Above This Line --------");
 define('MANDRILL_GROUPS_WEBHOOK_ENDPOINT', 'mandrill/webhook/groups');
+define('MANDRILL_GROUPS_IGNORE_HEADER', 'X-Mandrill-Groups-Ignore');
 
 /**
  * Implements hook_menu().
@@ -331,6 +332,12 @@ function mandrill_groups_form_mandrill_groups_discussion_node_form_alter(&$form,
  * will be created.
  */
 function mandrill_groups_process_message($message) {
+  // Ignore this message based on our header. Most likely due the group being
+  // CC'd when the send option is to "reply to sender".
+  if (!empty($message['headers'][MANDRILL_GROUPS_IGNORE_HEADER])) {
+    return;
+  }
+
   $user = user_load_by_mail($message['from_email']);
   if (!$user) {
     watchdog('mandrill_groups', 'Message from %email denied: no user with that email address exists.',
@@ -421,12 +428,12 @@ function mandrill_groups_process_message($message) {
  */
 function _mandrill_groups_filter_reply($message) {
   $reply_line_position = strpos($message, MANDRILL_GROUPS_MESSAGE_SEPERATOR);
-  $quote_tags = variable_get('mandrill_groups_filter_tags', '');
+  $quote_tags = variable_get('mandrill_groups_filter_tags', 'gmail_extra');
   $tags_array = explode(',', $quote_tags);
   foreach ($tags_array as $tag) {
     $div_tag = '<div class="' . trim($tag) . '">';
     $reply_line_position = min($reply_line_position, strpos($message, $div_tag));
-  } 
+  }
   $prior_close_tag_position = strrpos($message, '</', $reply_line_position - strlen($message));
   $next_open_tag_position = strpos($message, '<', $prior_close_tag_position + 2);
   // @todo replace "substr" with intelligent parsing of html tags to leave
@@ -541,14 +548,18 @@ function mandrill_groups_comment_insert($comment) {
   if (!empty($reply_to_id)) {
     $message['mandrill']['header']['In-Reply-To'] = $reply_to_id;
   }
+
+  list($from_user, $from_domain) = explode('@', $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value());
+  $from = $from_user . '+MGD' . $node_wrapper->getIdentifier() . '@' . $from_domain;
+
   // Mandrill automatically puts the "From" into "Reply To" and replaces the
   // "From" with the official system email address.
   if ($group_wrapper->{MANDRILL_GROUPS_EMAIL_REPLY_TO}->value() == 'sender' && isset($author->mail)) {
+    // Make sure to set the Cc to the group email before overriding with author.
+    $message['mandrill']['header']['Cc'] = $from;
+    $message['mandrill']['header'][MANDRILL_GROUPS_IGNORE_HEADER] = 1;
+
     $from = $author->mail;
-  }
-  else {
-    list($from_user, $from_domain) = explode('@', $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value());
-    $from = $from_user . '+MGD' . $node_wrapper->getIdentifier() . '@' . $from_domain;
   }
 
   entity_save('comment', $comment);
@@ -579,7 +590,7 @@ function mandrill_groups_send_email($addresses, $message, $discussion, $from) {
   $message['body'][] = $postscript;
 
   // Send Email.
-  drupal_mail('mandrill_groups', 'discussion', implode(',', $addresses), 'und', $message, $from);
+  drupal_mail('mandrill_groups', 'discussion', implode(',', $addresses), LANGUAGE_NONE, $message, $from);
 }
 
 /**
@@ -589,6 +600,20 @@ function mandrill_groups_mail($key, &$message, $params) {
   if ($key == 'discussion') {
     $message['subject'] = $params['subject'];
     $message['body'] = $params['body'];
+  }
+}
+
+/**
+ * Implements hook_mandrill_mail_alter().
+ *
+ * Change the 'to' structure to allow for adding CC recipients.
+ */
+function mandrill_groups_mandrill_mail_alter(&$mandrill_params, $message) {
+  if (isset($mandrill_params['message']['headers']['Cc'])) {
+    $mandrill_params['message']['to'][] = array(
+      'email' => $mandrill_params['message']['headers']['Cc'],
+      'type' => 'cc',
+    );
   }
 }
 
