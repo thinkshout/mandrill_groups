@@ -530,7 +530,7 @@ function mandrill_groups_comment_insert($comment) {
       ),
       'from_name' => $author->name . ' via ' . variable_get('site_name', 'Drupal Site'),
       'overrides' => array(
-        'preserve_recipients' => FALSE,
+        'preserve_recipients' => TRUE,
       ),
     ),
   );
