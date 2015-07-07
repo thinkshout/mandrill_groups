@@ -534,6 +534,12 @@ function mandrill_groups_comment_insert($comment) {
       'header' => array(
         'Message-Id' => $comment->mandrill_groups_message_id,
         'Precedence' => 'List',
+        // Adding list specific headers. Note the Mandrill is currently only
+        // allowing List-Help through. This may change, so we've leave these in.
+        'List-Help' => "<{$group_wrapper->url->value()}>, <mailto:{$group_wrapper->author->mail->value()}>",
+        'List-Unsubscribe:' => "<mailto:{$group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value()}?subject=unsubscribe>",
+        'List-Post:' => "<mailto:{$group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value()}",
+        'List-Owner:' => "<mailto:{$group_wrapper->author->mail->value()}",
       ),
       'from_name' => $author->name . ' via ' . variable_get('site_name', 'Drupal Site'),
       'overrides' => array(
