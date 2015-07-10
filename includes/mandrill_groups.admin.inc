@@ -156,7 +156,7 @@ function mandrill_groups_settings_form_submit($form, &$form_state) {
     if (isset($result['domain'])) {
       $url = url(MANDRILL_GROUPS_WEBHOOK_ENDPOINT, array(
         'absolute' => TRUE,
-        'query' => array('domain' => $domain)
+        'query' => array('domain' => $domain),
       ));
       mandrill_add_inbound_route($domain, '*', $url);
     }
