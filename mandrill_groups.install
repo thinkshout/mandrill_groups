@@ -214,11 +214,7 @@ function _mandrill_groups_create_fields() {
       'type' => 'list_text',
       'locked' => TRUE,
       'settings' => array(
-        'allowed_values' => array(
-          0 => 'Immediately when comments are added',
-          1 => 'Daily',
-          2 => 'Weekly',
-        ),
+        'allowed_values_function' => 'mandrill_groups_email_frequency_allowed_values',
       ),
     ),
     MANDRILL_GROUPS_POSTSCRIPT_FIELD => array(

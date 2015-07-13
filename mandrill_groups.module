@@ -639,3 +639,17 @@ function mandrill_groups_preprocess_comment(&$variables) {
     }
   }
 }
+
+/**
+ * Allowed values callback for our email frequency field.
+ *
+ * @return array
+ *   An array of allowed values.
+ */
+function mandrill_groups_email_frequency_allowed_values() {
+  return array(
+    MANDRILL_GROUPS_EMAIL_IMMEDIATE => 'Immediately when comments are added',
+    MANDRILL_GROUPS_EMAIL_DAILY => 'Daily',
+    MANDRILL_GROUPS_EMAIL_NONE => 'No email',
+  );
+}
