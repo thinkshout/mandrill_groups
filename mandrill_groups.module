@@ -6,7 +6,6 @@
  * interacted with via Drupal or email.
  */
 
-define('MANDRILL_GROUPS_OG_REFERENCE_FIELD', 'mandrill_groups_og_ref');
 define('MANDRILL_GROUPS_EMAIL_FIELD', 'mandrill_groups_email');
 define('MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD', 'mandrill_groups_email_frequency');
 define('MANDRILL_GROUPS_SUBJECT_FIELD', 'mandrill_groups_subject_prefix');
@@ -318,8 +317,8 @@ function mandrill_groups_form_mandrill_groups_discussion_node_form_alter(&$form,
   // relate the new discussion to in the URL.
   $group = menu_get_object();
   if (og_is_group('node', $group)) {
-    $form['mandrill_groups_og_ref'][$form['language']['#value']][0]['default']['#default_value'][0] = $group->nid;
-    $form['mandrill_groups_og_ref']['#access'] = user_access('administer content');
+    $form[OG_AUDIENCE_FIELD][$form['language']['#value']][0]['default']['#default_value'][0] = $group->nid;
+    $form[OG_AUDIENCE_FIELD]['#access'] = user_access('administer content');
   }
 }
 
@@ -387,7 +386,7 @@ function mandrill_groups_process_message($message) {
   $discussion = $discussion_id ? node_load($discussion_id) : mandrill_groups_create_discussion($message['subject'], $group, $user);
   $discussion_wrapper = entity_metadata_wrapper('node', $discussion);
   // Verify the discussion matches the group attached to this email address:
-  if ($group->nid != $discussion_wrapper->{MANDRILL_GROUPS_OG_REFERENCE_FIELD}[0]->raw()) {
+  if ($group->nid != $discussion_wrapper->{OG_AUDIENCE_FIELD}[0]->raw()) {
     // Trying to post to a discussion using wrong group email.
     watchdog('mandrill_groups', 'Message from %email for discussion %discussion denied because the wrong targeting email was used (%groupemail)',
       array(
@@ -480,7 +479,7 @@ function mandrill_groups_create_discussion($subject, $group, $user) {
   );
   $discussion = entity_create('node', $values);
   $wrapper = entity_metadata_wrapper('node', $discussion);
-  $wrapper->{MANDRILL_GROUPS_OG_REFERENCE_FIELD}->set((int) $group->nid);
+  $wrapper->{OG_AUDIENCE_FIELD}->set((int) $group->nid);
   $wrapper->save();
   return $discussion;
 }
@@ -514,7 +513,7 @@ function mandrill_groups_comment_insert($comment) {
   $node_wrapper->save();
 
   // Grab our group.
-  $group = current($node_wrapper->{MANDRILL_GROUPS_OG_REFERENCE_FIELD}->value());
+  $group = current($node_wrapper->{OG_AUDIENCE_FIELD}->value());
   $group_wrapper = entity_metadata_wrapper('node', $group);
 
   // Load active members.
@@ -584,7 +583,7 @@ function mandrill_groups_comment_insert($comment) {
 function mandrill_groups_send_email($addresses, $message, $discussion, $from) {
   $discussion_wrapper = entity_metadata_wrapper('node', $discussion);
   // Grab our group.
-  $group = current($discussion_wrapper->{MANDRILL_GROUPS_OG_REFERENCE_FIELD}->value());
+  $group = current($discussion_wrapper->{OG_AUDIENCE_FIELD}->value());
   $group_wrapper = entity_metadata_wrapper('node', $group);
 
   $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), array(
