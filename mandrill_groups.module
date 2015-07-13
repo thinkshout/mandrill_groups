@@ -19,6 +19,9 @@ define('MANDRILL_GROUPS_MESSAGE_ID_FIELD', 'mandrill_groups_last_message_id');
 define('MANDRILL_GROUPS_MESSAGE_SEPERATOR', "-------- Reply Above This Line --------");
 define('MANDRILL_GROUPS_WEBHOOK_ENDPOINT', 'mandrill/webhook/groups');
 define('MANDRILL_GROUPS_IGNORE_HEADER', 'X-Mandrill-Groups-Ignore');
+define('MANDRILL_GROUPS_EMAIL_NONE', 0);
+define('MANDRILL_GROUPS_EMAIL_DAILY', 1);
+define('MANDRILL_GROUPS_EMAIL_IMMEDIATE', 2);
 
 /**
  * Implements hook_menu().
