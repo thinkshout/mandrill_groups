@@ -26,8 +26,8 @@ function mandrill_groups_install() {
 
   // Add OG's Content Access field so we can limit discussions to group members.
   $og_access_field = og_fields_info(OG_ACCESS_FIELD);
-  $og_access_field['field']['default_value'] = array(array('value' => 1));
-  og_create_field(OG_ACCESS_FIELD, 'node', MANDRILL_GROUPS_GROUP_NODE, $og_access_field);
+  $og_access_field['field']['default_value'] = array(array('value' => OG_CONTENT_ACCESS_PRIVATE));
+  og_create_field(OG_ACCESS_FIELD, 'node', MANDRILL_GROUPS_DISCUSSION_NODE, $og_access_field);
 
   // Create our custom fields.
   _mandrill_groups_create_fields();
