@@ -30,9 +30,23 @@ function mandrill_groups_install() {
   og_create_field(OG_ACCESS_FIELD, 'node', MANDRILL_GROUPS_DISCUSSION_NODE, $og_access_field);
 
   // Create our custom fields.
-  _mandrill_groups_create_fields();
-  // Add fields to our new node types.
-  _mandrill_groups_add_field_instances();
+  foreach (mandrill_groups_field_definitions() as $field_name => $field_def) {
+    // Create fields.
+    if (empty(field_read_field($field_name, array('include_inactive' => TRUE)))) {
+      field_create_field($field_def['field']);
+    }
+
+    // Create field instances.
+    if (!field_info_instance('node', $field_name, $field_def['instance']['bundle'])) {
+      field_create_instance($field_def['instance']);
+    }
+  }
+
+  // Update display field formatter for the OG group field on our Mandrill Group
+  // content type.
+  $instance = field_info_instance('node', OG_GROUP_FIELD, MANDRILL_GROUPS_GROUP_NODE);
+  $instance['display']['default']['settings']['field_name'] = OG_AUDIENCE_FIELD;
+  field_update_instance($instance);
 
   // Add database columns for comment properties.
   _mandrill_groups_add_comment_properties();
@@ -91,7 +105,6 @@ function mandrill_groups_disable() {
  * Implements hook_uninstall().
  */
 function mandrill_groups_uninstall() {
-
   $mandrill_groups_content_types = array(MANDRILL_GROUPS_GROUP_NODE, MANDRILL_GROUPS_DISCUSSION_NODE);
   $sql = 'SELECT nid FROM {node} n WHERE n.type IN (:type)';
   $result = db_query($sql, array(':type' => $mandrill_groups_content_types));
@@ -110,6 +123,11 @@ function mandrill_groups_uninstall() {
 
   // Delete membership type.
   og_membership_type_delete(MANDRILL_GROUPS_MEMBERSHIP_TYPE);
+
+  // Delete our custom fields.
+  foreach (mandrill_groups_field_definitions() as $field_name => $field_def) {
+    field_delete_field($field_name);
+  }
 }
 
 /**
@@ -149,200 +167,6 @@ function _mandrill_groups_create_membership_type() {
   );
   $og_membership_type_wrapper = entity_property_values_create_entity('og_membership_type', $values);
   og_membership_type_save($og_membership_type_wrapper->value());
-}
-
-/**
- * Create and add the Organic Groups reference field & Group Email field.
- */
-function _mandrill_groups_create_fields() {
-  // Clear the field cache so the field type is found.
-  field_cache_clear();
-  $automatic_fields = array(
-    MANDRILL_GROUPS_EMAIL_FIELD => array(
-      'field_name' => MANDRILL_GROUPS_EMAIL_FIELD,
-      'type' => 'text',
-      'locked' => TRUE,
-      'settings' => array(
-        'no_ui' => FALSE,
-      ),
-    ),
-    MANDRILL_GROUPS_SUBJECT_FIELD => array(
-      'field_name' => MANDRILL_GROUPS_SUBJECT_FIELD,
-      'type' => 'text',
-      'locked' => TRUE,
-      'cardinality' => 1,
-      'settings' => array(
-        'max_length' => '20',
-      ),
-    ),
-    MANDRILL_GROUPS_EMAIL_REPLY_TO => array(
-      'field_name' => MANDRILL_GROUPS_EMAIL_REPLY_TO,
-      'type' => 'list_text',
-      'locked' => TRUE,
-      'cardinality' => 1,
-      'settings' => array(
-        'allowed_values' => array(
-          'group' => 'Group',
-          'sender' => 'Sender',
-        ),
-        'allowed_values_function' => '',
-      ),
-    ),
-    MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD => array(
-      'field_name' => MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD,
-      'type' => 'list_text',
-      'locked' => TRUE,
-      'settings' => array(
-        'allowed_values_function' => 'mandrill_groups_email_frequency_allowed_values',
-      ),
-    ),
-    MANDRILL_GROUPS_POSTSCRIPT_FIELD => array(
-      'field_name' => MANDRILL_GROUPS_POSTSCRIPT_FIELD,
-      'type' => 'text_long',
-      'locked' => TRUE,
-    ),
-    MANDRILL_GROUPS_MESSAGE_ID_FIELD => array(
-      'field_name' => MANDRILL_GROUPS_MESSAGE_ID_FIELD,
-      'type' => 'text',
-      'locked' => TRUE,
-    ),
-  );
-  // If the fields don't already exist, create them.
-  foreach ($automatic_fields as $field_name => $field_def) {
-    $prior_field = field_read_field($field_name, array('include_inactive' => TRUE));
-    if (empty($prior_field)) {
-      $new_field = $field_def;
-      field_create_field($new_field);
-    }
-  }
-}
-
-/**
- * Add all custom fields for the content types created by this module.
- */
-function _mandrill_groups_add_field_instances() {
-  // Create instance of group email field on group entity.
-  if (!field_info_instance('node', MANDRILL_GROUPS_EMAIL_FIELD, MANDRILL_GROUPS_GROUP_NODE)) {
-    $email_field_instance = array(
-      'entity_type' => 'node',
-      'bundle' => MANDRILL_GROUPS_GROUP_NODE,
-      'field_name' => MANDRILL_GROUPS_EMAIL_FIELD,
-      'label' => t('Mandrill Groups Email'),
-    );
-    field_create_instance($email_field_instance);
-  }
-  // Create instance of group message prefix field on group entity.
-  if (!field_info_instance('node', MANDRILL_GROUPS_SUBJECT_FIELD, MANDRILL_GROUPS_GROUP_NODE)) {
-    $subject_field_instance = array(
-      'entity_type' => 'node',
-      'bundle' => MANDRILL_GROUPS_GROUP_NODE,
-      'field_name' => MANDRILL_GROUPS_SUBJECT_FIELD,
-      'label' => t('Email Subject Prefix'),
-      'display' => array(
-        'default' => array(
-          'type' => 'hidden',
-        ),
-      ),
-      'description' => t('This text will be prepended to the subject of emails sent for comments on discussions in this group. <i>Example: <strong>"[Groupname] "</strong></i>'),
-    );
-    field_create_instance($subject_field_instance);
-  }
-  // Create instance of reply-to option field on group entity.
-  if (!field_info_instance('node', MANDRILL_GROUPS_EMAIL_REPLY_TO, MANDRILL_GROUPS_GROUP_NODE)) {
-    $recipient_field_instance = array(
-      'entity_type' => 'node',
-      'bundle' => MANDRILL_GROUPS_GROUP_NODE,
-      'field_name' => MANDRILL_GROUPS_EMAIL_REPLY_TO,
-      'label' => t('Email Reply Option'),
-      'widget' => array(
-        'type' => 'options_buttons',
-        'module' => 'options',
-        'active' => 1,
-      ),
-      'display' => array(
-        'default' => array(
-          'type' => 'hidden',
-        ),
-      ),
-      'required' => 1,
-      'default_value' => array(array('value' => 'group')),
-      'description' => t('When replying to group emails, who should the email go to?'),
-    );
-    field_create_instance($recipient_field_instance);
-  }
-  if (!field_info_instance('node', MANDRILL_GROUPS_MESSAGE_ID_FIELD, MANDRILL_GROUPS_DISCUSSION_NODE)) {
-    $message_id_field_instance = array(
-      'entity_type' => 'node',
-      'bundle' => MANDRILL_GROUPS_DISCUSSION_NODE,
-      'field_name' => MANDRILL_GROUPS_MESSAGE_ID_FIELD,
-      'label' => t('Last Message ID'),
-      'display' => array(
-        'default' => array(
-          'type' => 'hidden',
-        ),
-      ),
-      'widget' => array(
-        'weight' => '20',
-      ),
-    );
-    field_create_instance($message_id_field_instance);
-  }
-  if (!field_info_instance('node', MANDRILL_GROUPS_POSTSCRIPT_FIELD, MANDRILL_GROUPS_GROUP_NODE)) {
-    $postscript_field_instance = array(
-      'entity_type' => 'node',
-      'bundle' => MANDRILL_GROUPS_GROUP_NODE,
-      'field_name' => MANDRILL_GROUPS_POSTSCRIPT_FIELD,
-      'label' => t('Email Postscript'),
-      'description' => 'This text will be included at the end of emails generated by comments in this group\'s discussions. Be sure to include unsubscribe instructions if you change the default values. You can include custom links and values using the following variables:<br />
-@group_name : The name of this group.<br />
-@site_name : The name of this website.<br />
-@group_email : The email address used to post to this group.<br />
-@group_link : A link to view this group on the web.<br />
-@discussion_link : A link to view the discussion this email came from on the web.<br />
-@settings_link : A link to this user\'s membership settings page.',
-      'default_value' => array(
-        array(
-          'value' => '<br/><br/>----------------------- <br/>
-| You received this message because you are a member of the group <i>@group_name</i> at <i>@site_name</i>. <br/>
-| To unsubscribe from this group and stop receiving emails from it, reply with the subject line <i>unsubscribe</i>. <br/>
-| To post to this group, send email to @group_email. <br/>
-| Visit this group at @group_link. <br/>
-| View this discussion online at @discussion_link. <br/>
-| To control your subscription settings, visit @settings_link. <br/>
------------------------ ',
-        ),
-      ),
-      'display' => array(
-        'default' => array(
-          'type' => 'hidden',
-        ),
-      ),
-    );
-    field_create_instance($postscript_field_instance);
-  }
-
-
-  // Create instance of email frequency field on Mandrill Groups OG membership
-  // type.
-  if (!field_info_instance('og_membership', MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD, MANDRILL_GROUPS_MEMBERSHIP_TYPE)) {
-    $email_frequency_field_instance = array(
-      'entity_type' => 'og_membership',
-      'bundle' => MANDRILL_GROUPS_MEMBERSHIP_TYPE,
-      'field_name' => MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD,
-      'label' => t('Mandrill Groups Email Frequency'),
-      // Make field required so user is prompted to set email frequency field
-      // when joining the group.
-      'required' => TRUE,
-      // Set default value to send email immediately when comments are created.
-      'default_value' => array(array('value' => 0)),
-    );
-    field_create_instance($email_frequency_field_instance);
-  }
-  // Update display field formatter for the OG group field on our Mandrill Group
-  // content type.
-  $instance = field_info_instance('node', OG_GROUP_FIELD, MANDRILL_GROUPS_GROUP_NODE);
-  $instance['display']['default']['settings']['field_name'] = OG_AUDIENCE_FIELD;
-  field_update_instance($instance);
 }
 
 /**
@@ -443,3 +267,165 @@ function _mandrill_groups_add_permissions() {
   }
 }
 
+/**
+ * Return Mandrill Groups field definitions.
+ *
+ * @return array
+ *   Associative array containing field and instance definitions.
+ */
+function mandrill_groups_field_definitions() {
+  return array(
+    MANDRILL_GROUPS_EMAIL_FIELD => array(
+      'field' => array(
+        'field_name' => MANDRILL_GROUPS_EMAIL_FIELD,
+        'type' => 'text',
+        'locked' => TRUE,
+        'settings' => array(
+          'no_ui' => FALSE,
+        ),
+      ),
+      'instance' => array(
+        'entity_type' => 'node',
+        'bundle' => MANDRILL_GROUPS_GROUP_NODE,
+        'field_name' => MANDRILL_GROUPS_EMAIL_FIELD,
+        'label' => t('Mandrill Groups Email'),
+      ),
+    ),
+    MANDRILL_GROUPS_SUBJECT_FIELD => array(
+      'field' => array(
+        'field_name' => MANDRILL_GROUPS_SUBJECT_FIELD,
+        'type' => 'text',
+        'locked' => TRUE,
+        'cardinality' => 1,
+        'settings' => array(
+          'max_length' => '20',
+        ),
+      ),
+      'instance' => array(
+        'entity_type' => 'node',
+        'bundle' => MANDRILL_GROUPS_GROUP_NODE,
+        'field_name' => MANDRILL_GROUPS_SUBJECT_FIELD,
+        'label' => t('Email Subject Prefix'),
+        'display' => array(
+          'default' => array(
+            'type' => 'hidden',
+          ),
+        ),
+        'description' => t('This text will be prepended to the subject of emails sent for comments on discussions in this group. <i>Example: <strong>"[Groupname] "</strong></i>'),
+      ),
+    ),
+    MANDRILL_GROUPS_EMAIL_REPLY_TO => array(
+      'field' => array(
+        'field_name' => MANDRILL_GROUPS_EMAIL_REPLY_TO,
+        'type' => 'list_text',
+        'locked' => TRUE,
+        'cardinality' => 1,
+        'settings' => array(
+          'allowed_values' => array(
+            'group' => 'Group',
+            'sender' => 'Sender',
+          ),
+          'allowed_values_function' => '',
+        ),
+      ),
+      'instance' => array(
+        'entity_type' => 'node',
+        'bundle' => MANDRILL_GROUPS_GROUP_NODE,
+        'field_name' => MANDRILL_GROUPS_EMAIL_REPLY_TO,
+        'label' => t('Email Reply Option'),
+        'widget' => array(
+          'type' => 'options_buttons',
+          'module' => 'options',
+          'active' => 1,
+        ),
+        'display' => array(
+          'default' => array(
+            'type' => 'hidden',
+          ),
+        ),
+        'required' => 1,
+        'default_value' => array(array('value' => 'group')),
+        'description' => t('When replying to group emails, who should the email go to?'),
+      ),
+    ),
+    MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD => array(
+      'field' => array(
+        'field_name' => MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD,
+        'type' => 'list_text',
+        'locked' => TRUE,
+        'settings' => array(
+          'allowed_values_function' => 'mandrill_groups_email_frequency_allowed_values',
+        ),
+      ),
+      'instance' => array(
+        'entity_type' => 'og_membership',
+        'bundle' => MANDRILL_GROUPS_MEMBERSHIP_TYPE,
+        'field_name' => MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD,
+        'label' => t('Mandrill Groups Email Frequency'),
+        // Make field required so user is prompted to set email frequency field
+        // when joining the group.
+        'required' => TRUE,
+        // Set default value to send email immediately.
+        'default_value' => array(array('value' => 0)),
+      ),
+    ),
+    MANDRILL_GROUPS_POSTSCRIPT_FIELD => array(
+      'field' => array(
+        'field_name' => MANDRILL_GROUPS_POSTSCRIPT_FIELD,
+        'type' => 'text_long',
+        'locked' => TRUE,
+      ),
+      'instance' => array(
+        'entity_type' => 'node',
+        'bundle' => MANDRILL_GROUPS_GROUP_NODE,
+        'field_name' => MANDRILL_GROUPS_POSTSCRIPT_FIELD,
+        'label' => t('Email Postscript'),
+        'description' => 'This text will be included at the end of emails generated by comments in this group\'s discussions. Be sure to include unsubscribe instructions if you change the default values. You can include custom links and values using the following variables:<br />
+@group_name : The name of this group.<br />
+@site_name : The name of this website.<br />
+@group_email : The email address used to post to this group.<br />
+@group_link : A link to view this group on the web.<br />
+@discussion_link : A link to view the discussion this email came from on the web.<br />
+@settings_link : A link to this user\'s membership settings page.',
+        'default_value' => array(
+          array(
+            'value' => '<br/><br/>----------------------- <br/>
+| You received this message because you are a member of the group <i>@group_name</i> at <i>@site_name</i>. <br/>
+| To unsubscribe from this group and stop receiving emails from it, reply with the subject line <i>unsubscribe</i>. <br/>
+| To post to this group, send email to @group_email. <br/>
+| Visit this group at @group_link. <br/>
+| View this discussion online at @discussion_link. <br/>
+| To control your subscription settings, visit @settings_link. <br/>
+----------------------- ',
+          ),
+        ),
+        'display' => array(
+          'default' => array(
+            'type' => 'hidden',
+          ),
+        ),
+      ),
+    ),
+    MANDRILL_GROUPS_MESSAGE_ID_FIELD => array(
+      'field' => array(
+        'field_name' => MANDRILL_GROUPS_MESSAGE_ID_FIELD,
+        'type' => 'text',
+        'locked' => TRUE,
+      ),
+      'instance' => array(
+        'entity_type' => 'node',
+        'bundle' => MANDRILL_GROUPS_DISCUSSION_NODE,
+        'field_name' => MANDRILL_GROUPS_MESSAGE_ID_FIELD,
+        'label' => t('Last Message ID'),
+        'display' => array(
+          'default' => array(
+            'type' => 'hidden',
+          ),
+        ),
+        'widget' => array(
+          'weight' => '20',
+        ),
+      ),
+    ),
+  );
+}
