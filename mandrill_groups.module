@@ -319,6 +319,34 @@ function mandrill_groups_form_mandrill_groups_discussion_node_form_alter(&$form,
   if (og_is_group('node', $group)) {
     $form[OG_AUDIENCE_FIELD][$form['language']['#value']][0]['default']['#default_value'][0] = $group->nid;
     $form[OG_AUDIENCE_FIELD]['#access'] = user_access('administer content');
+
+    // Inject our comment form for new discussions.
+    $comment = new stdClass();
+    $comment->node_type = 'comment_node_' . MANDRILL_GROUPS_DISCUSSION_NODE;
+    $form['comment'] = array();
+    $form_state['comment'] = array();
+    // This ensures that any fields added to comments are included.
+    field_attach_form('comment', $comment, $form['comment'], $form_state['comment']);
+  }
+}
+
+/**
+ * Implements hook_node_insert().
+ *
+ * Insert the first comment when creating a new discussion.
+ */
+function mandrill_groups_node_insert($node) {
+  if ($node->type == MANDRILL_GROUPS_DISCUSSION_NODE) {
+    $author = user_load($node->uid);
+    $comment = new stdClass();
+    $comment->comment_body = $node->comment_body;
+    $comment->node_type = 'comment_node_' . $node->type;
+    $comment->nid = $node->nid;
+    $comment->uid = $node->uid;
+    $comment->language = $node->language;
+    $comment->name = $author->name;
+
+    comment_save($comment);
   }
 }
 
