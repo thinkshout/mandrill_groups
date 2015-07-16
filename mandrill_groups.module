@@ -714,7 +714,7 @@ function mandrill_groups_comment_insert($comment) {
   }
 
   entity_save('comment', $comment);
-  mandrill_groups_send_email($addresses, $message, $node, $from);
+  mandrill_groups_send_email($from, $addresses, $message, $group, $node);
 }
 
 /**
@@ -723,20 +723,34 @@ function mandrill_groups_comment_insert($comment) {
  * This function appends the appropriate postscript to emails, whether they are
  * individual comment messages or consolidated messages.
  */
-function mandrill_groups_send_email($addresses, $message, $discussion, $from) {
-  $discussion_wrapper = entity_metadata_wrapper('node', $discussion);
-  // Grab our group.
-  $group = current($discussion_wrapper->{OG_AUDIENCE_FIELD}->value());
+function mandrill_groups_send_email($from, $addresses, $message, $group, $discussion = NULL) {
   $group_wrapper = entity_metadata_wrapper('node', $group);
 
-  $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), array(
+  // Add list specific headers.
+  $mandrill_headers = array(
+    'Precedence' => 'List',
+    // Adding list-specific headers. Note that Mandrill is currently only
+    // allowing List-Help through. This may change, so we'll leave these in.
+    'List-Help' => "<{$group_wrapper->url->value()}>, <mailto:{$group_wrapper->author->mail->value()}>",
+    'List-Unsubscribe:' => "<mailto:{$group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value()}?subject=unsubscribe>",
+    'List-Post:' => "<mailto:{$group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value()}",
+    'List-Owner:' => "<mailto:{$group_wrapper->author->mail->value()}",
+  );
+  $message['mandrill']['header'] = array_merge($message['mandrill']['header'], $mandrill_headers);
+
+  $postscript_tokens = array(
     '@group_name' => $group_wrapper->label(),
     '@site_name' => variable_get('site_name'),
     '@group_email' => $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value(),
     '@group_link' => $group_wrapper->url->value(),
-    '@discussion_link' => $discussion_wrapper->url->value(),
     '@settings_link' => $GLOBALS['base_url'] . '/user',
-  ));
+  );
+  if ($discussion) {
+    $discussion_wrapper = entity_metadata_wrapper('node', $discussion);
+    $postscript_tokens['@discussion_link'] = $discussion_wrapper->url->value();
+  }
+
+  $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), $postscript_tokens);
   array_unshift($message['body'], MANDRILL_GROUPS_MESSAGE_SEPERATOR . '<br />');
   $message['body'][] = $postscript;
 
