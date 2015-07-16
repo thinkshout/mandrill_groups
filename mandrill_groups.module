@@ -661,8 +661,8 @@ function mandrill_groups_comment_insert($comment) {
   // Iterate through the group members collect emails for immediate sending.
   $addresses = array();
   foreach ($members as $member) {
-    $membership = og_get_membership($group_wrapper->type(), $group_wrapper->getIdentifier(), 'user', $member->uid);
-    if ($membership->{MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD} == MANDRILL_GROUPS_EMAIL_IMMEDIATE) {
+    $membership = entity_metadata_wrapper('og_membership', og_get_membership($group_wrapper->type(), $group_wrapper->getIdentifier(), 'user', $member->uid));
+    if ($membership->{MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD}->value() == MANDRILL_GROUPS_EMAIL_IMMEDIATE) {
       $addresses[] = $member->mail;
     }
   }
