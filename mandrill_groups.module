@@ -21,6 +21,7 @@ define('MANDRILL_GROUPS_IGNORE_HEADER', 'X-Mandrill-Groups-Ignore');
 define('MANDRILL_GROUPS_EMAIL_NONE', 0);
 define('MANDRILL_GROUPS_EMAIL_DAILY', 1);
 define('MANDRILL_GROUPS_EMAIL_IMMEDIATE', 2);
+define('MANDRILL_GROUPS_FIELD_DIGEST_LAST_SENT', 'field_last_digest_sent');
 
 /**
  * Implements hook_menu().
