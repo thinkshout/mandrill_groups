@@ -427,5 +427,45 @@ function mandrill_groups_field_definitions() {
         ),
       ),
     ),
+    MANDRILL_GROUPS_FIELD_DIGEST_LAST_SENT => array(
+      'field' => array(
+        'field_name' => MANDRILL_GROUPS_FIELD_DIGEST_LAST_SENT,
+        'type' => 'datetime',
+        'locked' => TRUE,
+        'cardinality' => 1,
+        'settings' => array(
+          'granularity' => array(
+            'month' => 'month',
+            'day' => 'day',
+            'year' => 'year',
+            'hour' => 0,
+            'minute' => 0,
+            'second' => 0,
+          ),
+          'tz_handling' => 'none',
+        ),
+      ),
+      'instance' => array(
+        'label' => t('Last Digest Sent'),
+        'widget' => array(
+          'type' => 'date_text',
+          'module' => 'date',
+          'active' => 0,
+        ),
+        'settings' => array(
+          'default_value' => 0,
+        ),
+        'display' => array(
+          'default' => array(
+            'type' => 'hidden',
+          ),
+        ),
+        'default_value' => 0,
+        'description' => 'This value is updated when a daily digest is sent for this group. Do not override manually.',
+        'field_name' => MANDRILL_GROUPS_FIELD_DIGEST_LAST_SENT,
+        'entity_type' => 'node',
+        'bundle' => MANDRILL_GROUPS_GROUP_NODE,
+      ),
+    ),
   );
 }

@@ -228,6 +228,7 @@ function mandrill_groups_form_mandrill_groups_group_node_form_alter(&$form, &$fo
   // added in mandrill_groups_form().
   $form['#validate'][] = 'mandrill_groups_apply_form_settings';
   $form[MANDRILL_GROUPS_EMAIL_FIELD]['#access'] = FALSE;
+  $form[MANDRILL_GROUPS_FIELD_DIGEST_LAST_SENT]['#access'] = FALSE;
 }
 
 /**
@@ -314,7 +315,7 @@ function mandrill_groups_send_digest() {
       $message = array(
         'id' => MANDRILL_GROUPS_DISCUSSION_NODE,
         'subject' => t('Daily Digest for Group @label', array('@label' => $group_wrapper->label())),
-        'body' => array(implode('<br />', $message_body)),
+        'body' => array(implode('', $message_body)),
         'mandrill' => array(
           'from_name' => variable_get('site_name', 'Drupal Site'),
           'overrides' => array(
