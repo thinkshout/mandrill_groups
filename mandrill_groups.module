@@ -657,12 +657,17 @@ function mandrill_groups_comment_insert($comment) {
   // Load active members.
   $members = $group_wrapper->{'members__' . OG_STATE_ACTIVE}->value();
 
-  // @todo Check subscription data.
-  // @todo Check delivery preferences.
-  // Gather emails.
+  // Iterate through the group members collect emails for immediate sending.
   $addresses = array();
   foreach ($members as $member) {
-    $addresses[] = $member->mail;
+    $membership = og_get_membership($group_wrapper->type(), $group_wrapper->getIdentifier(), 'user', $member->uid);
+    if ($membership->{MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD} == MANDRILL_GROUPS_EMAIL_IMMEDIATE) {
+      $addresses[] = $member->mail;
+    }
+  }
+
+  if (empty($addresses)) {
+    return;
   }
 
   $content = field_view_field('comment', $comment, 'comment_body');
