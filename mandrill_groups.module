@@ -22,6 +22,7 @@ define('MANDRILL_GROUPS_EMAIL_NONE', 0);
 define('MANDRILL_GROUPS_EMAIL_DAILY', 1);
 define('MANDRILL_GROUPS_EMAIL_IMMEDIATE', 2);
 define('MANDRILL_GROUPS_FIELD_DIGEST_LAST_SENT', 'field_last_digest_sent');
+define('MANDRILL_GROUPS_EMAIL_SEPARATOR', '+');
 
 /**
  * Implements hook_menu().
@@ -464,13 +465,12 @@ function mandrill_groups_node_insert($node) {
 /**
  * Create a new comment based on an email received via Mandrill.
  *
- * Formatting for the subject of the message will be special when attached to
- * an existing discussion, adding a tag to identify the discussion. Example:
+ * The $message['email'] is expected to be in the following format:
  *
- * email address: username+MGD0001@domain.tld
+ * email address: username+0001+0002@domain.tld
  *
- * If no #MGD tag is included, or an invalid number is given, a new discussion
- * will be created.
+ * Where username is the unique group identifier, 0001 is the optional
+ * ID and 0002 is the optional parent comment id.
  */
 function mandrill_groups_process_message($message) {
   // Ignore this message based on our header. Most likely due the group being
@@ -492,7 +492,7 @@ function mandrill_groups_process_message($message) {
 
   // Extract the unique group name and attempt to load the group.
   list($email_username, $email_domain) = explode('@', $message['email']);
-  list($email_username, $discussion_tag) = explode('+MGD', $email_username);
+  list($email_username, $discussion_id, $parent_comment_id) = explode(MANDRILL_GROUPS_EMAIL_SEPARATOR, $email_username);
   $from_email = $email_username . '@' . $email_domain;
   $group = mandrill_groups_load_by_mail($from_email);
 
@@ -532,7 +532,6 @@ function mandrill_groups_process_message($message) {
   }
 
   // Load existing discussion, or create a new one:
-  $discussion_id = (int) $discussion_tag;
   $discussion = $discussion_id ? node_load($discussion_id) : mandrill_groups_create_discussion($message['subject'], $group, $user);
   $discussion_wrapper = entity_metadata_wrapper('node', $discussion);
 
@@ -547,6 +546,7 @@ function mandrill_groups_process_message($message) {
       ));
     return FALSE;
   }
+
   $comment_body = array(
     'value' => _mandrill_groups_filter_reply($message['html']),
     'format' => 'mandrill_groups_html',
@@ -562,9 +562,15 @@ function mandrill_groups_process_message($message) {
     'node_type' => 'comment_node_' . MANDRILL_GROUPS_DISCUSSION_NODE,
     'mandrill_groups_original_msg_id' => isset($message['headers']['Message-Id']) ? $message['headers']['Message-Id'] : NULL,
   );
+
+  if ($parent_comment_id && comment_load($parent_comment_id)) {
+    $values['pid'] = $parent_comment_id;
+  }
   $comment = entity_create('comment', $values);
+
   $wrapper = entity_metadata_wrapper('comment', $comment);
   $wrapper->comment_body->set($comment_body);
+
   // If you use more standard save methodology, the comment gets lost, so:
   comment_submit($comment);
   comment_save($comment);
@@ -713,8 +719,10 @@ function mandrill_groups_comment_insert($comment) {
     $message['mandrill']['header']['In-Reply-To'] = $reply_to_id;
   }
 
+  entity_save('comment', $comment);
+
   list($from_user, $from_domain) = explode('@', $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value());
-  $from = $from_user . '+MGD' . $node_wrapper->getIdentifier() . '@' . $from_domain;
+  $from = $from_user . MANDRILL_GROUPS_EMAIL_SEPARATOR . $node_wrapper->getIdentifier() . MANDRILL_GROUPS_EMAIL_SEPARATOR . $comment->cid . '@' . $from_domain;
 
   // Mandrill automatically puts the "From" into "Reply To" and replaces the
   // "From" with the official system email address.
@@ -726,7 +734,6 @@ function mandrill_groups_comment_insert($comment) {
     $from = $author->mail;
   }
 
-  entity_save('comment', $comment);
   mandrill_groups_send_email($from, $addresses, $message, $group, $node);
 }
 
