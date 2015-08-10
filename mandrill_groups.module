@@ -476,7 +476,7 @@ function mandrill_groups_process_message($message) {
   // Ignore this message based on our header. Most likely due the group being
   // CC'd when the send option is to "reply to sender".
   if (!empty($message['headers'][MANDRILL_GROUPS_IGNORE_HEADER])) {
-    return;
+    return FALSE;
   }
 
   $user = user_load_by_mail($message['from_email']);
