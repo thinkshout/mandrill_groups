@@ -144,13 +144,16 @@ function _mandrill_groups_config_content_types() {
   );
   variable_set('node_options_' . MANDRILL_GROUPS_GROUP_NODE, $publishing_defaults);
   variable_set('node_options_' . MANDRILL_GROUPS_DISCUSSION_NODE, $publishing_defaults);
+
   // Commenting off for Groups, on for discussions..
   variable_set('comment_' . MANDRILL_GROUPS_GROUP_NODE, COMMENT_NODE_CLOSED);
   variable_set('comment_' . MANDRILL_GROUPS_DISCUSSION_NODE, COMMENT_NODE_OPEN);
+
   // Disable Comment subject lines.
   variable_set('comment_subject_field_' . MANDRILL_GROUPS_DISCUSSION_NODE, FALSE);
-  // Default to no threading, as the email function doesn't handle it elegantly.
-  variable_set('comment_default_mode_' . MANDRILL_GROUPS_DISCUSSION_NODE, COMMENT_MODE_FLAT);
+
+  // Default to threading enabled.
+  variable_set('comment_default_mode_' . MANDRILL_GROUPS_DISCUSSION_NODE, COMMENT_MODE_THREADED);
 }
 
 /**
