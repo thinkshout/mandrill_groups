@@ -496,7 +496,7 @@ function mandrill_groups_process_message($message) {
   $from_email = $email_username . '@' . $email_domain;
   $group = mandrill_groups_load_by_mail($from_email);
 
-  // Inavlid group, return false.
+  // Invalid group, return false.
   if (empty($group)) {
     watchdog('mandrill_groups', 'Message from %email denied: no group with the email address %groupemail exists.',
       array(
