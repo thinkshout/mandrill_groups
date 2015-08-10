@@ -20,6 +20,7 @@ function mandrill_groups_install() {
   $og_field = og_fields_info(OG_AUDIENCE_FIELD);
   $og_field['field']['target_type'] = 'node';
   $og_field['field']['label'] = 'Discussion Group';
+  $og_field['field']['cardinality'] = 1;
   $og_field['field']['settings']['handler_settings']['target_bundles'] = array(MANDRILL_GROUPS_GROUP_NODE => MANDRILL_GROUPS_GROUP_NODE);
   $og_field['field']['settings']['handler_settings']['membership_type'] = MANDRILL_GROUPS_MEMBERSHIP_TYPE;
   og_create_field(OG_AUDIENCE_FIELD, 'node', MANDRILL_GROUPS_DISCUSSION_NODE, $og_field);
