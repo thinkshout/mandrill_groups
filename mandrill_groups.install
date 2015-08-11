@@ -20,6 +20,7 @@ function mandrill_groups_install() {
   $og_field = og_fields_info(OG_AUDIENCE_FIELD);
   $og_field['field']['target_type'] = 'node';
   $og_field['field']['label'] = 'Discussion Group';
+  $og_field['field']['cardinality'] = 1;
   $og_field['field']['settings']['handler_settings']['target_bundles'] = array(MANDRILL_GROUPS_GROUP_NODE => MANDRILL_GROUPS_GROUP_NODE);
   $og_field['field']['settings']['handler_settings']['membership_type'] = MANDRILL_GROUPS_MEMBERSHIP_TYPE;
   og_create_field(OG_AUDIENCE_FIELD, 'node', MANDRILL_GROUPS_DISCUSSION_NODE, $og_field);
@@ -143,13 +144,16 @@ function _mandrill_groups_config_content_types() {
   );
   variable_set('node_options_' . MANDRILL_GROUPS_GROUP_NODE, $publishing_defaults);
   variable_set('node_options_' . MANDRILL_GROUPS_DISCUSSION_NODE, $publishing_defaults);
+
   // Commenting off for Groups, on for discussions..
   variable_set('comment_' . MANDRILL_GROUPS_GROUP_NODE, COMMENT_NODE_CLOSED);
   variable_set('comment_' . MANDRILL_GROUPS_DISCUSSION_NODE, COMMENT_NODE_OPEN);
+
   // Disable Comment subject lines.
   variable_set('comment_subject_field_' . MANDRILL_GROUPS_DISCUSSION_NODE, FALSE);
-  // Default to no threading, as the email function doesn't handle it elegantly.
-  variable_set('comment_default_mode_' . MANDRILL_GROUPS_DISCUSSION_NODE, COMMENT_MODE_FLAT);
+
+  // Default to threading enabled.
+  variable_set('comment_default_mode_' . MANDRILL_GROUPS_DISCUSSION_NODE, COMMENT_MODE_THREADED);
 }
 
 /**
