@@ -558,41 +558,39 @@ function mandrill_groups_process_message($message) {
       ));
     return TRUE;
   }
+  $mandrill_groups_original_msg_id = isset($message['headers']['Message-Id']) ? $message['headers']['Message-Id'] : NULL;
 
   // Load existing discussion, or create a new one:
-  $discussion = $discussion_id ? node_load($discussion_id) : mandrill_groups_create_discussion($message['subject'], $group, $user);
-  $discussion_wrapper = entity_metadata_wrapper('node', $discussion);
+  if ($discussion_id) {
+    $discussion = node_load($discussion_id);
 
-  // Verify the discussion matches the group attached to this email address:
-  if ($group->nid != $discussion_wrapper->{OG_AUDIENCE_FIELD}[0]->raw()) {
-    // Trying to post to a discussion using wrong group email.
-    watchdog('mandrill_groups', 'Message from %email for discussion %discussion denied because the wrong targeting email was used (%groupemail)',
-      array(
-        '%email' => $message['from_email'],
-        '%discussion' => $discussion->nid,
-        '%groupemail' => $message['email'],
-      ));
-    return FALSE;
+    // Fail if the discussion cannot be loaded.
+    if (!$discussion) {
+      watchdog('mandrill_groups', 'Message from %email for discussion %discussion denied because that discussion does not exist.',
+        array(
+          '%email' => $message['from_email'],
+          '%discussion' => $discussion_id,
+        ));
+      return FALSE;
+    }
+
+    // Verify the discussion matches the group attached to this email address:
+    $discussion_wrapper = entity_metadata_wrapper('node', $discussion);
+    if ($group->nid != $discussion_wrapper->{OG_AUDIENCE_FIELD}[0]->raw()) {
+      // Trying to post to a discussion using wrong group email.
+      watchdog('mandrill_groups', 'Message from %email for discussion %discussion denied because the wrong targeting email was used (%groupemail)',
+        array(
+          '%email' => $message['from_email'],
+          '%discussion' => $discussion->nid,
+          '%groupemail' => $message['email'],
+        ));
+      return FALSE;
+    }
+
+    $comment = mandrill_groups_add_comment($discussion, $comment_body, $user, $mandrill_groups_original_msg_id, $parent_comment_id, $message['subject']);
+    watchdog('mandrill_groups', 'Comment posted: %subject.', array('%subject' => $comment->subject), WATCHDOG_NOTICE, l(t('view'), 'comment/' . $comment->cid, array('fragment' => 'comment-' . $comment->cid)));
   }
-
-  $comment_body = array(
-    'value' => _mandrill_groups_filter_reply($message['html']),
-    'format' => 'mandrill_groups_html',
-  );
-  $values = array(
-    'subject' => $message['subject'],
-    'uid' => $user->uid,
-    'nid' => $discussion->nid,
-    'mail' => $message['from_email'],
-    'name' => $user->name,
-    'date' => 'now',
-    'status' => COMMENT_PUBLISHED,
-    'node_type' => 'comment_node_' . MANDRILL_GROUPS_DISCUSSION_NODE,
-    'mandrill_groups_original_msg_id' => isset($message['headers']['Message-Id']) ? $message['headers']['Message-Id'] : NULL,
-  );
-
-  if ($parent_comment_id && comment_load($parent_comment_id)) {
-    $values['pid'] = $parent_comment_id;
+  else {
     // Create a new discussion.
     $values = array(
       'type' => MANDRILL_GROUPS_DISCUSSION_NODE,
@@ -607,17 +605,7 @@ function mandrill_groups_process_message($message) {
     $wrapper->save();
     watchdog('mandrill_groups', 'Discussion created: %subject.', array('%subject' => $message['subject']), WATCHDOG_NOTICE, l(t('view'), $wrapper->url->value()));
   }
-  $comment = entity_create('comment', $values);
 
-  $wrapper = entity_metadata_wrapper('comment', $comment);
-  $wrapper->comment_body->set($comment_body);
-
-  // If you use more standard save methodology, the comment gets lost, so:
-  comment_submit($comment);
-  comment_save($comment);
-
-  watchdog('mandrill_groups', 'Comment posted: %subject.', array('%subject' => $comment->subject), WATCHDOG_NOTICE, l(t('view'), 'comment/' . $comment->cid, array('fragment' => 'comment-' . $comment->cid)));
-  return $comment;
 }
 
 /**
