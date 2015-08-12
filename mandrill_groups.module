@@ -451,18 +451,35 @@ function mandrill_groups_form_mandrill_groups_discussion_node_form_alter(&$form,
  */
 function mandrill_groups_node_insert($node) {
   if ($node->type == MANDRILL_GROUPS_DISCUSSION_NODE) {
-    $author = user_load($node->uid);
-    $comment = new stdClass();
-    $comment->comment_body = $node->comment_body;
-    $comment->node_type = 'comment_node_' . $node->type;
-    $comment->nid = $node->nid;
-    $comment->uid = $node->uid;
-    $comment->language = $node->language;
-    $comment->name = $author->name;
-
-    comment_save($comment);
+    $msg_id = isset($node->mandrill_groups_original_msg_id) ? $node->mandrill_groups_original_msg_id : NULL;
+    mandrill_groups_add_comment($node, $node->comment_body, user_load($node->uid), $msg_id);
   }
 }
+
+function mandrill_groups_add_comment($discussion, $comment_body, $account, $mandrill_groups_original_msg_id = NULL, $parent_comment_id = NULL, $subject = NULL) {
+  $values = array(
+    'subject' => $subject,
+    'uid' => $account->uid,
+    'nid' => $discussion->nid,
+//    'mail' => $message['from_email'],
+    'name' => $account->name,
+    'status' => COMMENT_PUBLISHED,
+    'node_type' => 'comment_node_' . MANDRILL_GROUPS_DISCUSSION_NODE,
+    'mandrill_groups_original_msg_id' => $mandrill_groups_original_msg_id,
+    'comment_body' => $comment_body,
+  );
+
+  if ($parent_comment_id && comment_load($parent_comment_id)) {
+    $values['pid'] = $parent_comment_id;
+  }
+  $comment = entity_create('comment', $values);
+
+  // If you use more standard save methodology, the comment gets lost, so:
+  comment_submit($comment);
+  comment_save($comment);
+  return $comment;
+}
+
 
 /**
  * Create a new comment based on an email received via Mandrill.
