@@ -537,6 +537,15 @@ function mandrill_groups_process_message($message) {
     return FALSE;
   }
 
+  $comment_body = array(
+    LANGUAGE_NONE => array(
+      0 => array(
+        'value' => _mandrill_groups_filter_reply($message['html']),
+        'format' => 'mandrill_groups_html',
+      ),
+    ),
+  );
+
   // Process an unsubscribe request.
   if (!strcasecmp(trim($message['subject']), 'unsubscribe')) {
     og_ungroup('node', $group->nid, 'user', $user->uid);
