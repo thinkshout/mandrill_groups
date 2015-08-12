@@ -567,6 +567,19 @@ function mandrill_groups_process_message($message) {
 
   if ($parent_comment_id && comment_load($parent_comment_id)) {
     $values['pid'] = $parent_comment_id;
+    // Create a new discussion.
+    $values = array(
+      'type' => MANDRILL_GROUPS_DISCUSSION_NODE,
+      'uid' => $user->uid,
+      'title' => $message['subject'],
+      'comment_body' => $comment_body,
+      'mandrill_groups_original_msg_id' => $mandrill_groups_original_msg_id,
+    );
+    $discussion = entity_create('node', $values);
+    $wrapper = entity_metadata_wrapper('node', $discussion);
+    $wrapper->{OG_AUDIENCE_FIELD}->set(array((int) $group->nid));
+    $wrapper->save();
+    watchdog('mandrill_groups', 'Discussion created: %subject.', array('%subject' => $message['subject']), WATCHDOG_NOTICE, l(t('view'), $wrapper->url->value()));
   }
   $comment = entity_create('comment', $values);
 
@@ -625,22 +638,6 @@ function mandrill_groups_load_by_mail($email = NULL) {
   else {
     return array();
   }
-}
-
-/**
- * Create a new discussion within a group.
- */
-function mandrill_groups_create_discussion($subject, $group, $user) {
-  $values = array(
-    'type' => MANDRILL_GROUPS_DISCUSSION_NODE,
-    'uid' => $user->uid,
-    'title' => $subject,
-  );
-  $discussion = entity_create('node', $values);
-  $wrapper = entity_metadata_wrapper('node', $discussion);
-  $wrapper->{OG_AUDIENCE_FIELD}->set(array((int) $group->nid));
-  $wrapper->save();
-  return $discussion;
 }
 
 /**
