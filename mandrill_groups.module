@@ -304,7 +304,10 @@ function mandrill_groups_send_digest() {
         if ($result) {
           $comments = comment_load_multiple(array_keys($result['comment']));
           foreach ($comments as $comment) {
-            $message_body[] = '<li>' . field_view_field('comment', $comment, 'comment_body')[0]['#markup'] . '</li>';
+            $comment_wrapper = entity_metadata_wrapper('comment', $comment);
+            if (!empty($comment_wrapper->comment_body->value()) && !empty($comment_wrapper->comment_body->value->value())) {
+              $message_body[] = '<li>' . field_view_field('comment', $comment, 'comment_body')[0]['#markup'] . '</li>';
+            }
           }
         }
       }
@@ -605,7 +608,6 @@ function mandrill_groups_process_message($message) {
     $wrapper->save();
     watchdog('mandrill_groups', 'Discussion created: %subject.', array('%subject' => $message['subject']), WATCHDOG_NOTICE, l(t('view'), $wrapper->url->value()));
   }
-
 }
 
 /**
