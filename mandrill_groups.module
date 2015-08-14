@@ -467,22 +467,18 @@ function mandrill_groups_node_insert($node) {
 }
 
 /**
- * Add a new comment.
+ * Post save callback for our group nodes to add a comment.
  *
- * @param $discussion
- * @param $comment_body
- * @param $account
- * @param null $mandrill_groups_original_msg_id
- * @param null $parent_comment_id
- * @param null $subject
- * @param array $files
- * @return bool
- * @throws \Exception
+ * @param object $node
+ *   A fully loaded node object.
+ */
 function mandrill_groups_post_save($node) {
   $msg_id = isset($node->mandrill_groups_original_msg_id) ? $node->mandrill_groups_original_msg_id : NULL;
   mandrill_groups_add_comment($node, $node->comment_body, user_load($node->uid), $msg_id);
 }
 
+/**
+ * Wrapper function for creating a new comment.
  */
 function mandrill_groups_add_comment($discussion, $comment_body, $account, $mandrill_groups_original_msg_id = NULL, $parent_comment_id = NULL, $subject = NULL, $files = array()) {
   $values = array(
