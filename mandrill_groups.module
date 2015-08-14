@@ -23,6 +23,8 @@ define('MANDRILL_GROUPS_EMAIL_DAILY', 1);
 define('MANDRILL_GROUPS_EMAIL_IMMEDIATE', 2);
 define('MANDRILL_GROUPS_FIELD_DIGEST_LAST_SENT', 'field_last_digest_sent');
 define('MANDRILL_GROUPS_EMAIL_SEPARATOR', '+');
+define('MANDRILL_GROUPS_ATTACHMENT_FIELD', 'mandrill_groups_attachments');
+define('MANDRILL_GROUPS_ATTACHMENT_SENDLIMIT', 'mandrill_groups_attach_limit');
 
 /**
  * Implements hook_menu().
@@ -453,18 +455,33 @@ function mandrill_groups_form_mandrill_groups_discussion_node_form_alter(&$form,
  * Insert the first comment when creating a new discussion.
  */
 function mandrill_groups_node_insert($node) {
-  if ($node->type == MANDRILL_GROUPS_DISCUSSION_NODE) {
+  // We only want to create a default comment in this hook when creating a new
+  // discussion from the website. The mandrill_groups_created_from_email flag
+  // is set inside of mandrill_groups_process_message().
+  if ($node->type == MANDRILL_GROUPS_DISCUSSION_NODE && !$node->mandrill_groups_created_from_email) {
     $msg_id = isset($node->mandrill_groups_original_msg_id) ? $node->mandrill_groups_original_msg_id : NULL;
     mandrill_groups_add_comment($node, $node->comment_body, user_load($node->uid), $msg_id);
   }
 }
 
-function mandrill_groups_add_comment($discussion, $comment_body, $account, $mandrill_groups_original_msg_id = NULL, $parent_comment_id = NULL, $subject = NULL) {
+/**
+ * Add a new comment.
+ *
+ * @param $discussion
+ * @param $comment_body
+ * @param $account
+ * @param null $mandrill_groups_original_msg_id
+ * @param null $parent_comment_id
+ * @param null $subject
+ * @param array $files
+ * @return bool
+ * @throws \Exception
+ */
+function mandrill_groups_add_comment($discussion, $comment_body, $account, $mandrill_groups_original_msg_id = NULL, $parent_comment_id = NULL, $subject = NULL, $files = array()) {
   $values = array(
     'subject' => $subject,
     'uid' => $account->uid,
     'nid' => $discussion->nid,
-//    'mail' => $message['from_email'],
     'name' => $account->name,
     'status' => COMMENT_PUBLISHED,
     'node_type' => 'comment_node_' . MANDRILL_GROUPS_DISCUSSION_NODE,
@@ -476,6 +493,11 @@ function mandrill_groups_add_comment($discussion, $comment_body, $account, $mand
     $values['pid'] = $parent_comment_id;
   }
   $comment = entity_create('comment', $values);
+
+  $comment_wrapper = entity_metadata_wrapper('comment', $comment);
+  foreach ($files as $id => $file) {
+    $comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}[$id]->file->set($file);
+  }
 
   // If you use more standard save methodology, the comment gets lost, so:
   comment_submit($comment);
@@ -589,9 +611,6 @@ function mandrill_groups_process_message($message) {
         ));
       return FALSE;
     }
-
-    $comment = mandrill_groups_add_comment($discussion, $comment_body, $user, $mandrill_groups_original_msg_id, $parent_comment_id, $message['subject']);
-    watchdog('mandrill_groups', 'Comment posted: %subject.', array('%subject' => $comment->subject), WATCHDOG_NOTICE, l(t('view'), 'comment/' . $comment->cid, array('fragment' => 'comment-' . $comment->cid)));
   }
   else {
     // Create a new discussion.
@@ -601,6 +620,7 @@ function mandrill_groups_process_message($message) {
       'title' => $message['subject'],
       'comment_body' => $comment_body,
       'mandrill_groups_original_msg_id' => $mandrill_groups_original_msg_id,
+      'mandrill_groups_created_from_email' => TRUE,
     );
     $discussion = entity_create('node', $values);
     $wrapper = entity_metadata_wrapper('node', $discussion);
@@ -608,6 +628,25 @@ function mandrill_groups_process_message($message) {
     $wrapper->save();
     watchdog('mandrill_groups', 'Discussion created: %subject.', array('%subject' => $message['subject']), WATCHDOG_NOTICE, l(t('view'), $wrapper->url->value()));
   }
+
+
+  // Mandrill sends attachments in two slightly different arrays, so we must
+  // check them both (https://mandrill.zendesk.com/hc/en-us/articles/205583207-What-is-the-format-of-inbound-email-webhooks-):
+  $files = array();
+  if (isset($message['attachments'])) {
+    foreach ($message['attachments'] as $filename => $attachment) {
+      $location = file_build_uri('mandrill_groups/' . $discussion_wrapper->label() . '/' . $attachment['name']);
+      $file = file_save_data($attachment['content'], $location);
+      if (isset($attachment['type'])) {
+        $file->filemime = $attachment['type'];
+        file_save($file);
+      }
+      $files[] = $file;
+    }
+  }
+
+  $comment = mandrill_groups_add_comment($discussion, $comment_body, $user, $mandrill_groups_original_msg_id, $parent_comment_id, $message['subject']);
+  watchdog('mandrill_groups', 'Comment posted: %subject.', array('%subject' => $comment->subject), WATCHDOG_NOTICE, l(t('view'), 'comment/' . $comment->cid, array('fragment' => 'comment-' . $comment->cid)));
 }
 
 /**
@@ -665,6 +704,8 @@ function mandrill_groups_comment_insert($comment) {
   }
   // Load posting user:
   $author = user_load($comment->uid);
+
+  $comment_wrapper = entity_metadata_wrapper('comment', $comment);
 
   // Load parent node.
   $node = node_load($comment->nid);
@@ -751,6 +792,22 @@ function mandrill_groups_comment_insert($comment) {
     $message['mandrill']['header'][MANDRILL_GROUPS_IGNORE_HEADER] = 1;
 
     $from = $author->mail;
+  }
+
+  // Check for attachments:
+  if ($comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD} && count($comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->value())) {
+    $attachment_values = $comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->value();
+    $message['attachments'] = array();
+    foreach ($attachment_values as $file_info) {
+      $file = file_load($file_info['fid']);
+      $label = empty($file_info['description']) ? $file->filename : $file_info['description'];
+      if ($file->filesize < 1000000 * $node_wrapper->mandrill_groups_og_ref->{MANDRILL_GROUPS_ATTACHMENT_SENDLIMIT}->value()) {
+        $message['attachments'][] = array('uri' => $file->uri);
+      }
+      else {
+        $message['body'][] = l($label, file_create_url($file->uri)) . '<br />';
+      }
+    }
   }
 
   mandrill_groups_send_email($from, $addresses, $message, $group, $node);
