@@ -804,7 +804,7 @@ function mandrill_groups_comment_insert($comment) {
     foreach ($attachment_values as $file_info) {
       $file = file_load($file_info['fid']);
       $label = empty($file_info['description']) ? $file->filename : $file_info['description'];
-      if ($file->filesize < 1000000 * $node_wrapper->mandrill_groups_og_ref->{MANDRILL_GROUPS_ATTACHMENT_SENDLIMIT}->value()) {
+      if ($file->filesize < 1000000 * $node_wrapper->{OG_AUDIENCE_FIELD}->{MANDRILL_GROUPS_ATTACHMENT_SENDLIMIT}->value()) {
         $message['attachments'][] = array('uri' => $file->uri);
       }
       else {
