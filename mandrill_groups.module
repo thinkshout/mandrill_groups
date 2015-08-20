@@ -626,24 +626,39 @@ function mandrill_groups_process_message($message) {
       'mandrill_groups_created_from_email' => TRUE,
     );
     $discussion = entity_create('node', $values);
-    $wrapper = entity_metadata_wrapper('node', $discussion);
-    $wrapper->{OG_AUDIENCE_FIELD}->set(array((int) $group->nid));
-    $wrapper->save();
-    watchdog('mandrill_groups', 'Discussion created: %subject.', array('%subject' => $message['subject']), WATCHDOG_NOTICE, l(t('view'), $wrapper->url->value()));
+    $discussion_wrapper = entity_metadata_wrapper('node', $discussion);
+    $discussion_wrapper->{OG_AUDIENCE_FIELD}->set((int) $group->nid);
+    $discussion_wrapper->save();
+    watchdog('mandrill_groups', 'Discussion created: %subject.', array('%subject' => $message['subject']), WATCHDOG_NOTICE, l(t('view'), $discussion_wrapper->url->value()));
   }
 
 
-  // Mandrill sends attachments in two slightly different arrays, so we must
-  // check them both (https://mandrill.zendesk.com/hc/en-us/articles/205583207-What-is-the-format-of-inbound-email-webhooks-):
+  // Add attachments as files on the new comment. Note that we are not adding
+  // images, just attachments. @see https://mandrill.zendesk.com/hc/en-us/articles/205583207-What-is-the-format-of-inbound-email-webhooks.
   $files = array();
   if (isset($message['attachments'])) {
+    $field_settings = field_info_instance('comment', MANDRILL_GROUPS_ATTACHMENT_FIELD, 'comment_node_' . MANDRILL_GROUPS_DISCUSSION_NODE);
+
+    // Build an array of allowed file types.
+    $allowed_types = array();
+    $allowed_ext = explode(' ', $field_settings['settings']['file_extensions']);
+    include_once DRUPAL_ROOT . '/includes/file.mimetypes.inc';
+    $mimetype_mappings = file_mimetype_mapping();
+    foreach ($allowed_ext as $ext) {
+      $allowed_types[] = $mimetype_mappings['mimetypes'][$mimetype_mappings['extensions'][$ext]];
+    }
+
+    // Build our base file directory.
+    $base_path = explode("/", $field_settings['settings']['file_directory'])[0] . '/' . $discussion_wrapper->label();
+
     foreach ($message['attachments'] as $filename => $attachment) {
-      $location = file_build_uri('mandrill_groups/' . $discussion_wrapper->label() . '/' . $attachment['name']);
-      $file = file_save_data($attachment['content'], $location);
-      if (isset($attachment['type'])) {
-        $file->filemime = $attachment['type'];
-        file_save($file);
+      // Invalid file type, continue.
+      if (!in_array($attachment['type'], $allowed_types)) {
+        continue;
       }
+      $uri = file_build_uri($base_path);
+      file_prepare_directory($uri, FILE_CREATE_DIRECTORY && FILE_MODIFY_PERMISSIONS);
+      $file = file_save_data(base64_decode($attachment['content']), $uri . '/' . $attachment['name']);
       $files[] = $file;
     }
   }
