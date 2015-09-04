@@ -366,7 +366,7 @@ function mandrill_groups_validate_group_email($element, $form_state) {
 function mandrill_groups_apply_form_settings($form, &$form_state) {
   $today = new DateTime("today");
   $form_state['values']['mandrill_groups_email'][$form_state['values']['language']][0]['value'] = $form_state['values']['email_user'] . '@' . $form_state['values']['email_domain'];
-  $form_state['values']['field_last_digest_sent'][$form_state['values']['language']][0]['value'] =$today->format('Y-m-d 00:00:00');
+  $form_state['values']['field_last_digest_sent'][$form_state['values']['language']][0]['value'] = $today->format('Y-m-d 00:00:00');
 }
 
 /**
