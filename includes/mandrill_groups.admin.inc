@@ -133,6 +133,14 @@ function mandrill_groups_settings_form($form, &$form_state) {
     '#required' => FALSE,
   );
 
+  $form['mandrill_groups_process_bounce'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Process bounces'),
+    '#default_value' => variable_get('mandrill_groups_process_bounce', FALSE),
+    '#description' => t("Set a users group status to inactive when a Mandrill bounce event is triggered."),
+    '#required' => FALSE,
+  );
+
   // Add submit handler that adds domain and route if present.
   $form['#submit'][] = 'mandrill_groups_settings_form_submit';
 
@@ -159,6 +167,27 @@ function mandrill_groups_settings_form_submit($form, &$form_state) {
         'query' => array('domain' => $domain),
       ));
       mandrill_add_inbound_route($domain, '*', $url);
+    }
+  }
+
+  $webhook = mandrill_groups_filter_webhooks();
+  $bounce_event = $webhook && in_array('hard_bounce', $webhook['events']);
+  if ($form_state['values']['mandrill_groups_process_bounce']) {
+    if ($webhook && $bounce_event) {
+      return;
+    }
+    if ($webhook) {
+      $webhook['events'][] = 'hard_bounce';
+      mandrill_update_webhook($webhook['id'], MANDRILL_GROUPS_WEBHOOK_ENDPOINT, $webhook['events'], $webhook['description']);
+    }
+    else {
+      mandrill_add_webhook(MANDRILL_GROUPS_WEBHOOK_ENDPOINT, array('hard_bounce'), 'Drupal Mandrill Groups bounce processing.');
+    }
+  }
+  else {
+    if ($webhook && in_array('hard_bounce', $webhook['events'])) {
+      unset($webhook['events'][array_search('hard_bounce', $webhook['events'])]);
+      mandrill_update_webhook($webhook['id'], MANDRILL_GROUPS_WEBHOOK_ENDPOINT, $webhook['events'], $webhook['description']);
     }
   }
 }
