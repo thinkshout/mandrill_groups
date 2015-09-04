@@ -140,6 +140,7 @@ function mandrill_groups_node_info() {
     ),
   );
 }
+
 /**
  * Implements hook_entity_property_info_alter().
  */
@@ -381,7 +382,15 @@ function mandrill_groups_process_webhook() {
   $events = drupal_json_decode($_POST['mandrill_events']);
   foreach ($events as $event) {
     // Process events:
-    mandrill_groups_process_message($event['msg']);
+    switch ($event['event']) {
+      case 'hard_bounce':
+        mandrill_groups_process_bounce($event['msg']);
+        break;
+
+      case 'inbound':
+        mandrill_groups_process_message($event['msg']);
+        break;
+    }
   }
   return count($events) . " events processed.";
 }
@@ -402,25 +411,38 @@ function mandrill_groups_webhook_access() {
     return FALSE;
   }
 
-  global $base_url;
-  $url = $base_url . $_SERVER['REQUEST_URI'];
-  $auth_key = NULL;
-  $webhooks = mandrill_get_webhooks();
-  foreach ($webhooks as $webhook) {
-    if ($webhook['url'] == $url) {
-      $auth_key = $webhook['auth_key'];
-      break;
-    }
-  }
-  if (!$auth_key) {
+  $webhook = mandrill_groups_filter_webhooks();
+  if (!$webhook || !$webhook['auth_key']) {
     return FALSE;
   }
+  $auth_key = $webhook['auth_key'];
+
   ksort($_POST);
+  global $base_url;
+  $url = $base_url . $_SERVER['REQUEST_URI'];
   foreach ($_POST as $arg => $val) {
     $url .= $arg . $val;
   }
   $signature = base64_encode(hash_hmac('sha1', $url, $auth_key, TRUE));
   return $signature == $_SERVER['HTTP_X_MANDRILL_SIGNATURE'];
+}
+
+/**
+ * Return the first active webhook matching this site's URI.
+ *
+ * @return array webhook | bool
+ */
+function mandrill_groups_filter_webhooks() {
+  global $base_url;
+  $url = $base_url . base_path() . MANDRILL_GROUPS_WEBHOOK_ENDPOINT . (isset($_REQUEST['domain']) ? '?domain=' . $_REQUEST['domain'] : '');
+  $auth_key = NULL;
+  $webhooks = mandrill_get_webhooks();
+  foreach ($webhooks as $webhook) {
+    if ($webhook['url'] == $url) {
+      return $webhook;
+    }
+  }
+  return FALSE;
 }
 
 /**
@@ -665,6 +687,61 @@ function mandrill_groups_process_message($message) {
 
   $comment = mandrill_groups_add_comment($discussion, $comment_body, $user, $mandrill_groups_original_msg_id, $parent_comment_id, $message['subject'], $files);
   watchdog('mandrill_groups', 'Comment posted: %subject.', array('%subject' => $comment->subject), WATCHDOG_NOTICE, l(t('view'), 'comment/' . $comment->cid, array('fragment' => 'comment-' . $comment->cid)));
+}
+
+/**
+ * Process a bounce notification from Mandrill.
+ *
+ * @param array $message
+ *   Mandrill message.
+ */
+function mandrill_groups_process_bounce(array $message) {
+  $user = user_load_by_mail($message['from_email']);
+
+  // A user with this from_email does not exist in the system, return false.
+  if (!$user) {
+    watchdog('mandrill_groups', 'Message from %email denied: no user with that email address exists.',
+      array(
+        '%email' => $message['from_email'],
+      ));
+    return FALSE;
+  }
+
+
+  // Extract the unique group name and attempt to load the group.
+  list($email_username, $email_domain) = explode('@', $message['email']);
+  list($email_username, $discussion_id, $parent_comment_id) = explode(MANDRILL_GROUPS_EMAIL_SEPARATOR, $email_username);
+  $from_email = $email_username . '@' . $email_domain;
+  $group = mandrill_groups_load_by_mail($from_email);
+
+  // Invalid group, return false.
+  if (empty($group)) {
+    watchdog('mandrill_groups', 'Message from %email denied: no group with the email address %groupemail exists.',
+      array(
+        '%email' => $message['from_email'],
+        '%groupemail' => $message['email'],
+      ));
+    return FALSE;
+  }
+
+  // The user is a not a valid member of the group.
+  if (!og_is_member('node', $group->nid, 'user', $user)) {
+    // This email address doesn't have access to this group.
+    watchdog('mandrill_groups', 'Message from %email denied because no user with that email address has access to group %groupname (NID: %groupid)',
+      array(
+        '%email' => $message['from_email'],
+        '%groupname' => $group->title,
+        '%groupid' => $group->nid,
+      ));
+    return FALSE;
+  }
+
+  $group_wrapper = entity_metadata_wrapper('node', $group);
+  $group_id = $group_wrapper->getIdentifier();
+  $membership = og_get_membership($group_wrapper->type(), $group_id, 'user', $user->uid);
+  $membership->state = OG_STATE_BLOCKED;
+
+  $membership->save();
 }
 
 /**
