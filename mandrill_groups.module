@@ -742,6 +742,9 @@ function mandrill_groups_process_bounce(array $message) {
   $membership->state = OG_STATE_BLOCKED;
 
   $membership->save();
+
+  // Allow other modules to respond to bounces.
+  module_invoke_all('mandrill_groups_process_bounce', $message, $membership);
 }
 
 /**
