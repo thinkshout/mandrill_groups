@@ -384,6 +384,7 @@ function mandrill_groups_process_webhook() {
     // Process events:
     switch ($event['event']) {
       case 'hard_bounce':
+      case 'reject':
         mandrill_groups_process_bounce($event['msg']);
         break;
 
