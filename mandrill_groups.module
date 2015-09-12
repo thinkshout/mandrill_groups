@@ -696,7 +696,7 @@ function mandrill_groups_process_message($message) {
  *   Mandrill message.
  */
 function mandrill_groups_process_bounce(array $message) {
-  $user = user_load_by_mail($message['from_email']);
+  $user = user_load_by_mail($message['email']);
 
   // A user with this from_email does not exist in the system, return false.
   if (!$user) {
@@ -709,7 +709,7 @@ function mandrill_groups_process_bounce(array $message) {
 
 
   // Extract the unique group name and attempt to load the group.
-  list($email_username, $email_domain) = explode('@', $message['email']);
+  list($email_username, $email_domain) = explode('@', $message['sender']);
   list($email_username, $discussion_id, $parent_comment_id) = explode(MANDRILL_GROUPS_EMAIL_SEPARATOR, $email_username);
   $from_email = $email_username . '@' . $email_domain;
   $group = mandrill_groups_load_by_mail($from_email);

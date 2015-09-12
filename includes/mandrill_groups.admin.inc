@@ -171,22 +171,22 @@ function mandrill_groups_settings_form_submit($form, &$form_state) {
   }
 
   $webhook = mandrill_groups_filter_webhooks();
-  $bounce_event = $webhook && in_array('hard_bounce', $webhook['events']);
+  $bounce_event = $webhook && in_array('reject', $webhook['events']);
   if ($form_state['values']['mandrill_groups_process_bounce']) {
     if ($webhook && $bounce_event) {
       return;
     }
     if ($webhook) {
-      $webhook['events'][] = 'hard_bounce';
+      $webhook['events'][] = 'reject';
       mandrill_update_webhook($webhook['id'], MANDRILL_GROUPS_WEBHOOK_ENDPOINT, $webhook['events'], $webhook['description']);
     }
     else {
-      mandrill_add_webhook(MANDRILL_GROUPS_WEBHOOK_ENDPOINT, array('hard_bounce'), 'Drupal Mandrill Groups bounce processing.');
+      mandrill_add_webhook(MANDRILL_GROUPS_WEBHOOK_ENDPOINT, array('reject'), 'Drupal Mandrill Groups bounce processing.');
     }
   }
   else {
-    if ($webhook && in_array('hard_bounce', $webhook['events'])) {
-      unset($webhook['events'][array_search('hard_bounce', $webhook['events'])]);
+    if ($webhook && in_array('reject', $webhook['events'])) {
+      unset($webhook['events'][array_search('reject', $webhook['events'])]);
       mandrill_update_webhook($webhook['id'], MANDRILL_GROUPS_WEBHOOK_ENDPOINT, $webhook['events'], $webhook['description']);
     }
   }
