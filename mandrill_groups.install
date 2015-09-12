@@ -46,7 +46,7 @@ function mandrill_groups_install() {
   // Update display field formatter for the OG group field on our Mandrill Group
   // content type.
   $instance = field_info_instance('node', OG_GROUP_FIELD, MANDRILL_GROUPS_GROUP_NODE);
-  $instance['display']['default']['settings']['field_name'] = OG_AUDIENCE_FIELD;
+  $instance['display']['default']['settings']['field_name'] = 0;
   field_update_instance($instance);
 
   // Add database columns for comment properties.
