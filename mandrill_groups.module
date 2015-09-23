@@ -946,7 +946,11 @@ function mandrill_groups_send_email($from, $addresses, $message, $group, $discus
   }
 
   $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), $postscript_tokens);
-  array_unshift($message['body'], MANDRILL_GROUPS_MESSAGE_SEPERATOR . '<br />');
+  // Don't include the 'Reply above this line' for digests.
+  $pos = strpos($message['subject'], 'Daily Digest');
+  if($pos === false) {
+    array_unshift($message['body'], MANDRILL_GROUPS_MESSAGE_SEPERATOR . '<br />');
+  }
   $message['body'][] = $postscript;
 
   // Send Email.
