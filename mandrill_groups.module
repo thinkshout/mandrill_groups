@@ -446,6 +446,7 @@ function mandrill_groups_filter_webhooks() {
   return FALSE;
 }
 
+
 /**
  * Implements hook_form_FORM_ID_alter().
  *
@@ -469,6 +470,24 @@ function mandrill_groups_form_mandrill_groups_discussion_node_form_alter(&$form,
     $form_state['comment'] = array();
     // This ensures that any fields added to comments are included.
     field_attach_form('comment', $comment, $form['comment'], $form_state['comment']);
+  }
+
+  // Turn off the ajax upload for file field if this is a new node.
+  if (!isset($form_state['node']->nid)) {
+    drupal_add_js("jQuery(function() { jQuery('.file-widget :submit').unbind(); });", 'inline');
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * FORM ID: mandrill_groups_discussion_node_form.
+ * FORM ID: comment_node_mandrill_groups_discussion_form.
+ */
+function mandrill_groups_form_comment_node_mandrill_groups_discussion_form_alter(&$form, &$form_state, $form_id) {
+  // Turn off the ajax upload for file field if this is a new comment.
+  if (!isset($form_state['comment']->cid)) {
+    drupal_add_js("jQuery(function() { jQuery('.file-widget :submit').unbind(); });", 'inline');
   }
 }
 
@@ -946,7 +965,11 @@ function mandrill_groups_send_email($from, $addresses, $message, $group, $discus
   }
 
   $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), $postscript_tokens);
-  array_unshift($message['body'], MANDRILL_GROUPS_MESSAGE_SEPERATOR . '<br />');
+  // Don't include the 'Reply above this line' for digests.
+  $pos = strpos($message['subject'], 'Daily Digest');
+  if($pos === false) {
+    array_unshift($message['body'], MANDRILL_GROUPS_MESSAGE_SEPERATOR . '<br />');
+  }
   $message['body'][] = $postscript;
 
   // Send Email.
