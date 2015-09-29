@@ -462,42 +462,9 @@ function mandrill_groups_form_mandrill_groups_discussion_node_form_alter(&$form,
     $form[OG_AUDIENCE_FIELD][$form['language']['#value']][0]['default']['#default_value'][0] = $group->nid;
     $form[OG_AUDIENCE_FIELD]['#access'] = user_access('administer content');
 
-    // Inject our comment form for new discussions.
-    $comment = new stdClass();
-    $comment->node_type = 'comment_node_' . MANDRILL_GROUPS_DISCUSSION_NODE;
-    $form['comment'] = array();
-    $form_state['comment'] = array();
-    // This ensures that any fields added to comments are included.
-    field_attach_form('comment', $comment, $form['comment'], $form_state['comment']);
+    // Add message to tell user they can add comments after creating the topic.
+    $form['title']['#description'] = t('You will be able to add comments after saving the discussion topic.');
   }
-}
-
-/**
- * Implements hook_node_insert().
- *
- * Insert the first comment when creating a new discussion.
- */
-function mandrill_groups_node_insert($node) {
-  // We only want to create a default comment in this hook when creating a new
-  // discussion from the website. The mandrill_groups_created_from_email flag
-  // is set inside of mandrill_groups_process_message().
-  if ($node->type == MANDRILL_GROUPS_DISCUSSION_NODE && !$node->mandrill_groups_created_from_email) {
-    // Register a shutdown function in order gain access to the node after it
-    // has been saved. We use hook_comment_insert to send group emails, and
-    // we cannot load a group from a node until after it has been saved.
-    drupal_register_shutdown_function('mandrill_groups_post_save', $node);
-  }
-}
-
-/**
- * Post save callback for our group nodes to add a comment.
- *
- * @param object $node
- *   A fully loaded node object.
- */
-function mandrill_groups_post_save($node) {
-  $msg_id = isset($node->mandrill_groups_original_msg_id) ? $node->mandrill_groups_original_msg_id : NULL;
-  mandrill_groups_add_comment($node, $node->comment_body, user_load($node->uid), $msg_id);
 }
 
 /**
