@@ -26,9 +26,10 @@ node type edit pages: https://www.drupal.org/node/1674078#comment-6460240
     you have the Mandrill PHP Library available. See the Mandrill project page
     for more details: https://www.drupal.org/project/mandrill.
 2. Enable 'Mandrill Groups' module.
-2. Go to 'admin/config/services/mandrill/groups' and add an email domain. (in.example.com)
-3. Go to https://mandrillapp.com/inbound and add an Inbound Domain. (in.example.com)
-4. Add a route for the new domain:
+3. Go to 'admin/reports/status' and click on the 'Rebuild permissions' link.
+4. Go to 'admin/config/services/mandrill/groups' and add an email domain. (in.example.com)
+5. Go to https://mandrillapp.com/inbound and add an Inbound Domain. (in.example.com)
+6. Add a route for the new domain:
   - Route: *@in.example.com
   - Webhook: http://example.com/mandrill/webhook/inbound
 
