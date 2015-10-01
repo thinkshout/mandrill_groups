@@ -26,9 +26,11 @@ function mandrill_groups_install() {
   og_create_field(OG_AUDIENCE_FIELD, 'node', MANDRILL_GROUPS_DISCUSSION_NODE, $og_field);
 
   // Add OG's Content Access field so we can limit discussions to group members.
-  $og_access_field = og_fields_info(OG_ACCESS_FIELD);
-  $og_access_field['field']['default_value'] = array(array('value' => OG_CONTENT_ACCESS_PRIVATE));
-  og_create_field(OG_ACCESS_FIELD, 'node', MANDRILL_GROUPS_DISCUSSION_NODE, $og_access_field);
+  $og_content_access_field = og_fields_info(OG_CONTENT_ACCESS_FIELD);
+  $og_content_access_field['field']['default_value'] = array(array('value' => OG_CONTENT_ACCESS_PRIVATE));
+  og_create_field(OG_CONTENT_ACCESS_FIELD, 'node', MANDRILL_GROUPS_DISCUSSION_NODE, $og_content_access_field);
+
+
 
   // Create our custom fields.
   foreach (mandrill_groups_field_definitions() as $field_name => $field_def) {
@@ -55,6 +57,8 @@ function mandrill_groups_install() {
   _mandrill_groups_add_permissions();
   // Add "mandrill_groups_html" text format specific to this module.
   _mandrill_groups_add_text_format();
+
+  node_access_needs_rebuild(TRUE);
 }
 
 /**
@@ -92,6 +96,7 @@ function _mandrill_groups_add_text_format() {
  */
 function mandrill_groups_enable() {
   mailsystem_set(array(MANDRILL_GROUPS_DISCUSSION_NODE => 'MandrillMailSystem'));
+  drupal_set_message($message = t('The content access permissions need to be rebuilt. <a href="@node_access_rebuild">Rebuild permissions</a>.', array('@node_access_rebuild' => url('admin/reports/status/rebuild'))), $type = 'status');
 }
 
 /**
