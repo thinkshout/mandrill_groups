@@ -375,7 +375,7 @@ function mandrill_groups_field_definitions() {
         // when joining the group.
         'required' => TRUE,
         // Set default value to send email immediately.
-        'default_value' => array(array('value' => 0)),
+        'default_value' => array(array('value' => MANDRILL_GROUPS_EMAIL_IMMEDIATE)),
       ),
     ),
     MANDRILL_GROUPS_POSTSCRIPT_FIELD => array(
