@@ -973,8 +973,8 @@ function mandrill_groups_preprocess_comment(&$variables) {
  */
 function mandrill_groups_email_frequency_allowed_values() {
   return array(
-    MANDRILL_GROUPS_EMAIL_IMMEDIATE => t('Immediately when comments are added'),
-    MANDRILL_GROUPS_EMAIL_DAILY => t('Daily'),
+    MANDRILL_GROUPS_EMAIL_IMMEDIATE => t('Immediate'),
+    MANDRILL_GROUPS_EMAIL_DAILY => t('Daily digest'),
     MANDRILL_GROUPS_EMAIL_NONE => t('No email'),
   );
 }
