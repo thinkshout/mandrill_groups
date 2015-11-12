@@ -987,3 +987,14 @@ function mandrill_groups_email_frequency_allowed_values() {
 function mandrill_groups_og_fields_info_alter(&$fields_info) {
   $fields_info[OG_AUDIENCE_FIELD]['field']['settings']['handler_settings']['membership_type'] = MANDRILL_GROUPS_MEMBERSHIP_TYPE;
 }
+
+/**
+ * Setup OG access on our group and discussion nodes.
+ */
+function mandrill_groups_setup_og_access() {
+  og_create_field(OG_ACCESS_FIELD, 'node', MANDRILL_GROUPS_GROUP_NODE);
+
+  $og_content_access_field = og_fields_info(OG_CONTENT_ACCESS_FIELD);
+  $og_content_access_field['field']['default_value'] = array(array('value' => OG_CONTENT_ACCESS_PRIVATE));
+  og_create_field(OG_CONTENT_ACCESS_FIELD, 'node', MANDRILL_GROUPS_DISCUSSION_NODE, $og_content_access_field);
+}
