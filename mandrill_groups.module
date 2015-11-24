@@ -727,7 +727,10 @@ function _mandrill_groups_filter_reply($message) {
   $tags_array = explode(',', $quote_tags);
   foreach ($tags_array as $tag) {
     $div_tag = '<div class="' . trim($tag) . '">';
-    $reply_line_position = min($reply_line_position, strpos($message, $div_tag));
+    $tag_pos = strpos($message, $div_tag);
+    if ($tag_pos !== FALSE) {
+      $reply_line_position = min($reply_line_position, $tag_pos);
+    }
   }
   $prior_close_tag_position = strrpos($message, '</', $reply_line_position - strlen($message));
   $next_open_tag_position = strpos($message, '<', $prior_close_tag_position + 2);
