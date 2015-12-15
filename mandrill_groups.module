@@ -819,6 +819,15 @@ function mandrill_groups_comment_insert($comment) {
   }
 
   $content = field_view_field('comment', $comment, 'comment_body');
+  $sender_name = $author->name;
+  // If redhen is present and we have a contact, use that contact's first and
+  // last name rather than the username.
+  if (module_exists('redhen_contact')) {
+    $redhen_contact = redhen_contact_load_by_user($author);
+    if ($redhen_contact && $redhen_contact->first_name && $redhen_contact->last_name) {
+      $sender_name = $redhen_contact->first_name . " " . $redhen_contact->last_name;
+    }
+  }
   $message = array(
     'id' => MANDRILL_GROUPS_DISCUSSION_NODE,
     'subject' => $node->title,
@@ -834,7 +843,7 @@ function mandrill_groups_comment_insert($comment) {
         'List-Post:' => "<mailto:{$group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value()}",
         'List-Owner:' => "<mailto:{$group_wrapper->author->mail->value()}",
       ),
-      'from_name' => $author->name . ' via ' . variable_get('site_name', 'Drupal Site'),
+      'from_name' => $sender_name . ' via ' . variable_get('site_name', 'Drupal Site'),
       'overrides' => array(
         'preserve_recipients' => TRUE,
       ),
