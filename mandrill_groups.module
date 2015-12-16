@@ -132,7 +132,7 @@ function mandrill_groups_node_info() {
       'locked' => TRUE,
     ),
     MANDRILL_GROUPS_DISCUSSION_NODE => array(
-      'name' => t('Mandrill Discussion'),
+      'name' => t('Topic'),
       'base' => 'mandrill_groups',
       'description' => t('Discussion thread that is part of a Mandrill Group. Users may opt in or out of individual Mandrill Discussions.'),
       'title_label' => t('Discussion Topic'),
