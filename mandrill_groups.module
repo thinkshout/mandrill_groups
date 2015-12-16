@@ -819,15 +819,7 @@ function mandrill_groups_comment_insert($comment) {
   }
 
   $content = field_view_field('comment', $comment, 'comment_body');
-  $sender_name = $author->name;
-  // If redhen is present and we have a contact, use that contact's first and
-  // last name rather than the username.
-  if (module_exists('redhen_contact')) {
-    $redhen_contact = redhen_contact_load_by_user($author);
-    if ($redhen_contact && $redhen_contact->first_name && $redhen_contact->last_name) {
-      $sender_name = $redhen_contact->first_name . " " . $redhen_contact->last_name;
-    }
-  }
+  $sender_name = entity_label('user', $author);
   $message = array(
     'id' => MANDRILL_GROUPS_DISCUSSION_NODE,
     'subject' => $node->title,
