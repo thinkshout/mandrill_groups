@@ -141,6 +141,14 @@ function mandrill_groups_settings_form($form, &$form_state) {
     '#required' => FALSE,
   );
 
+  $form['mandrill_groups_send_to_author'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Send email to author'),
+    '#default_value' => variable_get('mandrill_groups_send_to_author', FALSE),
+    '#description' => t("If checked, email will be sent to the author of the post. Leave unchecked to exclude author from email."),
+    '#required' => FALSE,
+  );
+
   // Add submit handler that adds domain and route if present.
   $form['#submit'][] = 'mandrill_groups_settings_form_submit';
 
