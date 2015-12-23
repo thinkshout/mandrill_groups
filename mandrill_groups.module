@@ -917,12 +917,19 @@ function mandrill_groups_send_email($from, $addresses, $message, $group, $discus
     $postscript_tokens['@discussion_link'] = $discussion_wrapper->url->value();
   }
 
-  $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), $postscript_tokens);
-  // Don't include the 'Reply above this line' for digests.
+  // Don't include the 'Reply above this line' or the link to individual post for digests.
   $pos = strpos($message['subject'], 'Daily Digest');
   if($pos === false) {
     array_unshift($message['body'], MANDRILL_GROUPS_MESSAGE_SEPERATOR . '<br />');
+    $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), $postscript_tokens);
+
+  } else {
+    //$group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value() = str_replace($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), "", "| Visit this group at @group_link. <br/>");
+    $postscript_edit = str_replace("| View this discussion online at @discussion_link. <br/>\r\n", "", $group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value());
+    $postscript = format_string($postscript_edit, $postscript_tokens);
+
   }
+  //$postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), $postscript_tokens);
   $message['body'][] = $postscript;
 
   // Send Email.
