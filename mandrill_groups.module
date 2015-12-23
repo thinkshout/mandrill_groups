@@ -924,12 +924,10 @@ function mandrill_groups_send_email($from, $addresses, $message, $group, $discus
     $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), $postscript_tokens);
 
   } else {
-    //$group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value() = str_replace($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), "", "| Visit this group at @group_link. <br/>");
     $postscript_edit = str_replace("| View this discussion online at @discussion_link. <br/>\r\n", "", $group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value());
     $postscript = format_string($postscript_edit, $postscript_tokens);
 
   }
-  //$postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), $postscript_tokens);
   $message['body'][] = $postscript;
 
   // Send Email.
