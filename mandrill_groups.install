@@ -31,7 +31,8 @@ function mandrill_groups_install() {
   // Create our custom fields.
   foreach (mandrill_groups_field_definitions() as $field_name => $field_def) {
     // Create fields.
-    if (empty(field_read_field($field_name, array('include_inactive' => TRUE)))) {
+    $current_field = field_read_field($field_name, array('include_inactive' => TRUE));
+    if (empty($current_field)) {
       field_create_field($field_def['field']);
     }
 
