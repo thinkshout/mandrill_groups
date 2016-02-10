@@ -641,7 +641,8 @@ function mandrill_groups_process_message($message) {
     }
 
     // Build our base file directory.
-    $base_path = explode("/", $field_settings['settings']['file_directory'])[0] . '/' . $discussion_wrapper->label();
+    $path_parts = explode("/", $field_settings['settings']['file_directory']);
+    $base_path = $path_parts[0] . '/' . $discussion_wrapper->label();
 
     foreach ($message['attachments'] as $filename => $attachment) {
       // Invalid file type, continue.
