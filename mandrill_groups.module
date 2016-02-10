@@ -1110,3 +1110,18 @@ function mandrill_groups_node_view($node, $view_mode, $langcode) {
   }
 }
 
+/**
+ * Implements hook_mandrill_valid_attachment_types_alter().
+ */
+function mandrill_groups_mandrill_valid_attachment_types_alter(&$valid_types) {
+  // Add additional valid type for rtf, word and excel files.
+  $valid_types[] = 'application/msword';
+  $valid_types[] = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  $valid_types[] = 'application/vnd.ms-excel';
+  $valid_types[] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  $valid_types[] = 'application/x-soffice';
+  $valid_types[] = 'application/rtf';
+  $valid_types[] = 'application/x-rtf';
+  $valid_types[] = 'text/rtf';
+  $valid_types[] = 'text/richtext';
+}
