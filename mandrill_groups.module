@@ -311,7 +311,8 @@ function mandrill_groups_send_digest() {
             // Fix for error in PHP before 5.5 as per
             // http://stackoverflow.com/questions/1075534/cant-use-method-return-value-in-write-context/4328049#4328049
             if ($comment_wrapper->comment_body->value() && $comment_wrapper->comment_body->value->value()) {
-              $message_body[] = '<li>' . field_view_field('comment', $comment, 'comment_body')[0]['#markup'] . '</li>';
+              $comment_body = field_view_field('comment', $comment, 'comment_body');
+              $message_body[] = '<li>' . $comment_body[0]['#markup'] . '</li>';
             }
           }
         }
