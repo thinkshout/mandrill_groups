@@ -558,10 +558,12 @@ function mandrill_groups_process_message($message) {
     return FALSE;
   }
 
+  // Take into consideration that this could be a plain text email.
+  $comment_body_value = $message['html'] ? $message['html'] : $message['text'];
   $comment_body = array(
     LANGUAGE_NONE => array(
       0 => array(
-        'value' => _mandrill_groups_filter_reply($message['html']),
+        'value' => _mandrill_groups_filter_reply($comment_body_value),
         'format' => 'mandrill_groups_html',
       ),
     ),
@@ -744,7 +746,17 @@ function _mandrill_groups_filter_reply($message) {
   else {
     $prior_close_tag_position = strrpos($message, '</', $reply_line_position - strlen($message));
     $next_open_tag_position = strpos($message, '<', $prior_close_tag_position + 2);
-    $post = substr($message, 0, $next_open_tag_position);
+    // If this is a plain text reply, we will have $$reply_line_position, but no
+    // $prior_close_tag_position or $next_open_tag_position.
+    if ($prior_close_tag_position === FALSE && $next_open_tag_position === FALSE) {
+      // Get everything up to $reply_line_position.
+      // On plain text email, account for the "> " inserted before each line.
+      $reply_line_position = $reply_line_position - 2;
+      $post = substr($message, 0, $reply_line_position);
+    }
+    else {
+      $post = substr($message, 0, $next_open_tag_position);
+    }
   }
   return $post;
 }
