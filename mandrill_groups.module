@@ -809,6 +809,13 @@ function mandrill_groups_comment_insert($comment) {
   // Load parent node.
   $node = node_load($comment->nid);
   $node_wrapper = entity_metadata_wrapper('node', $node);
+  // If this is not the first comment, then add "Re:" to the subject line.
+  if(!$node->comment_count) {
+    $subject_prefix = "";
+  }
+  else {
+    $subject_prefix = "Re: ";
+  }
 
   // We want to set the reply-to header to match a previous message sent from
   // this system for threading purposes.
@@ -873,7 +880,7 @@ function mandrill_groups_comment_insert($comment) {
     ),
   );
   if (isset($group_wrapper->{MANDRILL_GROUPS_SUBJECT_FIELD})) {
-    $message['subject'] = $group_wrapper->{MANDRILL_GROUPS_SUBJECT_FIELD}->value() . ' ' . $message['subject'];
+    $message['subject'] = $subject_prefix . $group_wrapper->{MANDRILL_GROUPS_SUBJECT_FIELD}->value() . ' ' . $message['subject'];
   }
 
   if (!empty($reply_to_id)) {
