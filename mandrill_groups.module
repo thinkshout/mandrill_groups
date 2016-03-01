@@ -254,7 +254,7 @@ function mandrill_groups_send_digest() {
   $result = $query
     ->entityCondition('entity_type', 'node', '=')
     ->entityCondition('bundle', MANDRILL_GROUPS_GROUP_NODE, '=')
-    ->fieldCondition(MANDRILL_GROUPS_FIELD_DIGEST_LAST_SENT, NULL, $today->format('Y-m-d 00:00:00'), '<')
+    ->fieldCondition(MANDRILL_GROUPS_FIELD_DIGEST_LAST_SENT, 'value', $today->format('Y-m-d 00:00:00'), '<')
     ->execute();
 
   // No groups need sending.
@@ -297,6 +297,8 @@ function mandrill_groups_send_digest() {
       // Load all comments from the previous day.
       if ($last_comment == $yesterday) {
         $message_body[] = '<h2>' . $discussion->title . '</h2>';
+        $path = 'node/' . $discussion->nid;
+        $url = url($path, array('absolute' => TRUE));
         $query = new EntityFieldQuery();
         $result = $query
           ->entityCondition('entity_type', 'comment', '=')
@@ -312,10 +314,17 @@ function mandrill_groups_send_digest() {
             // http://stackoverflow.com/questions/1075534/cant-use-method-return-value-in-write-context/4328049#4328049
             if ($comment_wrapper->comment_body->value() && $comment_wrapper->comment_body->value->value()) {
               $comment_body = field_view_field('comment', $comment, 'comment_body');
-              $message_body[] = '<li>' . $comment_body[0]['#markup'] . '</li>';
+              if ($comment->uid) {
+                $author = user_load($comment->uid);
+                $comment_name = entity_label('user', $author);
+                $attrib = $comment_name ? " Submitted by: $comment_name" : "";
+              }
+              $message_body[] = $comment_body[0]['#markup'] . $attrib . '<br>----------<br>';
             }
           }
         }
+        $message_body[] = $url;
+        $message_body[] = '<hr>';
       }
     }
 
