@@ -133,9 +133,9 @@ function mandrill_groups_node_info() {
   // Define content types.
   return array(
     MANDRILL_GROUPS_GROUP_NODE => array(
-      'name' => t('Mandrill Group'),
+      'name' => t('Discussion Group'),
       'base' => 'mandrill_groups',
-      'description' => t('Users subscribe to a Mandrill Group to be notified of all new Mandrill Discussions within that group.'),
+      'description' => t('Users subscribe to a Discussion Group to be notified of all new Mandrill Discussions within that group.'),
       'title_label' => t('Group Name'),
       // 'Locked' protects the machine name of this bundle from alteration.
       'locked' => TRUE,
@@ -143,7 +143,7 @@ function mandrill_groups_node_info() {
     MANDRILL_GROUPS_DISCUSSION_NODE => array(
       'name' => t('Topic'),
       'base' => 'mandrill_groups',
-      'description' => t('Discussion thread that is part of a Mandrill Group. Users may opt in or out of individual Mandrill Discussions.'),
+      'description' => t('Discussion thread that is part of a Mandrill Discussion Group. Users may opt in or out of individual Mandrill Discussions.'),
       'title_label' => t('Discussion Topic'),
       'locked' => TRUE,
     ),
