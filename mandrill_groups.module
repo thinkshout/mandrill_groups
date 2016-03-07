@@ -870,7 +870,10 @@ function mandrill_groups_comment_insert($comment) {
   $message = array(
     'id' => MANDRILL_GROUPS_DISCUSSION_NODE,
     'subject' => $node->title,
-    'body' => array($content[0]['#markup']),
+    'body' => array(
+      "Submitted by: $sender_name",
+      $content[0]['#markup'],
+    ),
     'mandrill' => array(
       'header' => array(
         'Message-Id' => $comment->mandrill_groups_message_id,
