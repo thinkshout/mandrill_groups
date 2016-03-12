@@ -430,11 +430,20 @@ function mandrill_groups_webhook_access() {
   }
 
   if (!isset($_POST)) {
+    watchdog("mandrill_groups", '<pre>' . print_r( $_REQUEST, TRUE) . '</pre>');
     return FALSE;
+  }
+
+  // Fallback verification of route, since HEAD requests can be received as GET,
+  // requests and may not pass as HEAD as indicated in above reference.
+  $uri_parts = explode('?', $_SERVER['REQUEST_URI'], 2);
+  if ($_POST['mandrill_events'] && $_POST['mandrill_events'] == '[]' && $_REQUEST['domain'] && $uri_parts[0] == '/' . MANDRILL_GROUPS_WEBHOOK_ENDPOINT) {
+    return TRUE;
   }
 
   $webhook = mandrill_groups_filter_webhooks();
   if (!$webhook || !$webhook['auth_key']) {
+    watchdog("mandrill_groups", '<pre>' . print_r( $_REQUEST, TRUE) . '</pre>');
     return FALSE;
   }
   $auth_key = $webhook['auth_key'];
@@ -1158,4 +1167,3 @@ function mandrill_groups_mandrill_valid_attachment_types_alter(&$valid_types) {
   $valid_types[] = 'text/rtf';
   $valid_types[] = 'text/richtext';
 }
-
