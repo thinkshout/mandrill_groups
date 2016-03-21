@@ -1108,7 +1108,7 @@ function mandrill_groups_edit_membership_access($og_membership) {
  * Page callback for editing member's email preferences for the group.
  */
 function mandrill_groups_edit_preferences_form($form, &$form_state, $group_type, $gid, $og_membership) {
-  include_once(drupal_get_path('module', 'og_ui') . '/og_ui.admin.inc');
+  include_once drupal_get_path('module', 'og_ui') . '/og_ui.admin.inc';
   $form = og_ui_edit_membership($form, $form_state, $group_type, $gid, $og_membership);
   // We have altered access to the form so user can access email field,
   // but we still need to hide the OG fields.
@@ -1117,6 +1117,8 @@ function mandrill_groups_edit_preferences_form($form, &$form_state, $group_type,
   $allowable = og_ui_user_access_group('manage members', $group_type, $group_id);
   $form['og_user']['#access'] = $allowable;
   $form['actions']['delete']['#access'] = $allowable;
+  $form['#validate'][] = 'og_ui_edit_membership_validate';
+  $form['#submit'][] = 'og_ui_edit_membership_submit';
   // Unset set 'group' link in breadcrumb.
   og_set_breadcrumb($group_type, $gid, array());
   return $form;
