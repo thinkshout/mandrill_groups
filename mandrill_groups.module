@@ -800,6 +800,8 @@ function mandrill_groups_load_by_mail($email = NULL) {
     ->propertyCondition('type', MANDRILL_GROUPS_GROUP_NODE, '=');
   if ($email) {
     $query->fieldCondition('mandrill_groups_email', 'value', $email);
+    // Run the query as user 1 in order to get private groups too.
+    $query->addMetaData('account', user_load(1));
   }
   $results = $query->execute();
   if (isset($results['node'])) {
