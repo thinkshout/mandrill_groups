@@ -55,6 +55,12 @@ function mandrill_groups_install() {
   // Add "mandrill_groups_html" text format specific to this module.
   _mandrill_groups_add_text_format();
 
+  // Increase the length of comment subject titles to default node title length.
+  $schema = drupal_get_schema();
+  $comment_subject_field_definition = $schema['comment']['fields']['subject'];
+  $comment_subject_field_definition['length'] = 255;
+  db_change_field('comment', 'subject', 'subject', $comment_subject_field_definition);
+
   node_access_needs_rebuild(TRUE);
 }
 
@@ -131,6 +137,9 @@ function mandrill_groups_uninstall() {
   foreach (mandrill_groups_field_definitions() as $field_name => $field_def) {
     field_delete_field($field_name);
   }
+
+  // TODO: Set comment field length back to 64 after deleting our comments.
+  // Provided there are no other comments with subjects longer than 64 char.
 }
 
 /**
@@ -542,4 +551,16 @@ function mandrill_groups_field_definitions() {
       ),
     ),
   );
+}
+
+/**
+ * Implements hook_update_N().
+ *
+ * Increases the length of comment subjects to 255 characters.
+ */
+function mandrill_groups_update_7100() {
+  $schema = drupal_get_schema();
+  $comment_subject_field_definition = $schema['comment']['fields']['subject'];
+  $comment_subject_field_definition['length'] = 255;
+  db_change_field('comment', 'subject', 'subject', $comment_subject_field_definition);
 }

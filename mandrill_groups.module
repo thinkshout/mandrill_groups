@@ -188,6 +188,8 @@ function mandrill_groups_schema_alter(&$schema) {
     'not null' => FALSE,
     'default' => NULL,
   );
+  // Increase length of comment subjects to be length of default node titles.
+  $schema['comment']['fields']['subject']['length'] = 255;
 }
 
 /**
@@ -420,7 +422,8 @@ function mandrill_groups_process_webhook() {
 /**
  * Validate that a webhook with post data is coming from Mandrill.
  *
- * See http://help.mandrill.com/entries/23704122-Authenticating-webhook-requests
+ * See
+ * http://help.mandrill.com/entries/23704122-Authenticating-webhook-requests.
  */
 function mandrill_groups_webhook_access() {
   // Mandrill verifies new inbound routes with a HEAD request.
@@ -501,6 +504,10 @@ function mandrill_groups_form_mandrill_groups_discussion_node_form_alter(&$form,
  * Wrapper function for creating a new comment.
  */
 function mandrill_groups_add_comment($discussion, $comment_body, $account, $mandrill_groups_original_msg_id = NULL, $parent_comment_id = NULL, $subject = NULL, $files = array()) {
+  // Make sure subject is 255 characters or less before trying to save.
+  if (isset($subject) && strlen($subject) > 255) {
+    $subject = substr($subject, 0, 255);
+  }
   $values = array(
     'subject' => $subject,
     'uid' => $account->uid,
@@ -638,6 +645,8 @@ function mandrill_groups_process_message($message) {
   }
   else {
     // Create a new discussion.
+    // Ensure the subject is 255 characters or less.
+    $message['subject'] = (strlen($message['subject']) > 255) ? substr($message['subject'], 0, 255) : $message['subject'];
     $values = array(
       'type' => MANDRILL_GROUPS_DISCUSSION_NODE,
       'uid' => $user->uid,
@@ -904,12 +913,16 @@ function mandrill_groups_comment_insert($comment) {
   );
   if (isset($group_wrapper->{MANDRILL_GROUPS_SUBJECT_FIELD})) {
     $message['subject'] = $subject_prefix . $group_wrapper->{MANDRILL_GROUPS_SUBJECT_FIELD}->value() . ' ' . $message['subject'];
+    $message['subject'] = (strlen($message['subject']) > 255) ? substr($message['subject'], 0, 255) : $message['subject'];
   }
 
   if (!empty($reply_to_id)) {
     $message['mandrill']['header']['In-Reply-To'] = $reply_to_id;
   }
-
+  // Make sure subject is 255 characters or less before trying to save.
+  if (isset($comment->subject) && (strlen($comment->subject) > 255)) {
+    $comment->subject = substr($comment->subject, 0, 255);
+  }
   entity_save('comment', $comment);
 
   list($from_user, $from_domain) = explode('@', $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value());

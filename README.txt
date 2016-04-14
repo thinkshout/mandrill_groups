@@ -34,3 +34,7 @@ node type edit pages: https://www.drupal.org/node/1674078#comment-6460240
   - Webhook: http://example.com/mandrill/webhook/inbound
 
 You can manage your Mandrill webhooks here: https://www.mandrillapp.com/settings/webhooks/
+
+Note: Upon install, the Mandrill Groups module will change the length of
+comment subjects from 64 characters to 255 characters so that email subject
+lines can be the same length as node titles, assuming default node title length.
