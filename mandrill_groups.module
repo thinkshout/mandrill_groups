@@ -838,10 +838,18 @@ function mandrill_groups_comment_insert($comment) {
   // Load parent node.
   $node = node_load($comment->nid);
   $node_wrapper = entity_metadata_wrapper('node', $node);
-  // If this is not the first comment, then add "Re:" to the subject line.
-  if(!$node->comment_count) {
+
+  // If $node->comment_count is 0, then it's the first comment (via web).
+  if ($node->comment_count == 0) {
     $subject_prefix = "";
   }
+  // If $node->comment_count == 1 and $comment->cid == $node->cid,
+  // then we know it's the first one (via email).
+  elseif ($node->comment_count == 1 && $comment->cid == $node->cid) {
+    $subject_prefix = "";
+  }
+  // If $node->comment_count >= 1 and $comment->cid != $node->cid,
+  // then we know it's NOT the first one.
   else {
     $subject_prefix = "Re: ";
   }
