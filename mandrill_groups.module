@@ -594,6 +594,8 @@ function mandrill_groups_process_message($message) {
 
   // Take into consideration that this could be a plain text email.
   $comment_body_value = $message['html'] ? $message['html'] : $message['text'];
+  // Remove the inline image tags since we are not processing the images.
+  $comment_body_value = preg_replace("/<img[^>]+\>/i", "", $comment_body_value);
   $comment_body = array(
     LANGUAGE_NONE => array(
       0 => array(
