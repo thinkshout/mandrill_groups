@@ -266,6 +266,7 @@ function mandrill_groups_send_digest() {
     ->entityCondition('entity_type', 'node', '=')
     ->entityCondition('bundle', MANDRILL_GROUPS_GROUP_NODE, '=')
     ->fieldCondition(MANDRILL_GROUPS_FIELD_DIGEST_LAST_SENT, 'value', $today->format('Y-m-d 00:00:00'), '<')
+    ->addMetaData('account', user_load(1))
     ->execute();
 
   // No groups need sending.
