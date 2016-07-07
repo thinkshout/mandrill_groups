@@ -149,6 +149,14 @@ function mandrill_groups_settings_form($form, &$form_state) {
     '#required' => FALSE,
   );
 
+  $form['mandrill_groups_include_previous_comments'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Include previous comments in new comment emails'),
+    '#default_value' => variable_get('mandrill_groups_include_previous_comments', TRUE),
+    '#description' => t("If checked, new comment emails will include the 20 most recent comments on the topic. Leave unchecked to exclude previous comments from email."),
+    '#required' => FALSE,
+  );
+
   // Add submit handler that adds domain and route if present.
   $form['#submit'][] = 'mandrill_groups_settings_form_submit';
 

@@ -965,6 +965,36 @@ function mandrill_groups_comment_insert($comment) {
     }
   }
 
+  // Include previous comments on this topic if desired as per admin settings.
+  $include_previous = variable_get('mandrill_groups_send_to_author', TRUE);
+  if ($include_previous) {
+    $result = comment_get_thread($node, COMMENT_MODE_THREADED, 22);
+    if ($result) {
+      $message['body'][] = '<b>' . t('Previous Comments') . '</b><br>-----------------------<br>';
+      $i = 0;
+      foreach ($result as $key => $value) {
+        if ($i == 20) {
+          $message['body'][] = '<br>View all comments online: ' . $node_wrapper->url->value();
+          break;
+        }
+        $current_comment = comment_load($value);
+        $comment_wrap = entity_metadata_wrapper('comment', $value);
+        // Fix for error in PHP before 5.5 as per
+        // http://stackoverflow.com/questions/1075534/cant-use-method-return-value-in-write-context/4328049#4328049
+        if ($comment_wrap->comment_body->value() && $comment_wrap->comment_body->value->value()) {
+          $comment_body = field_view_field('comment', $current_comment, 'comment_body');
+          if ($comment->uid) {
+            $author = user_load($comment->uid);
+            $comment_name = mandrill_groups_get_sender_name($author);
+            $attrib = $comment_name ? " Submitted by: $comment_name" : "";
+          }
+          $message['body'][] = $comment_body[0]['#markup'] . $attrib . '<br>----------<br>';
+        }
+        $i++;
+      }
+    }
+  }
+
   mandrill_groups_send_email($from, $addresses, $message, $group, $node);
 }
 
