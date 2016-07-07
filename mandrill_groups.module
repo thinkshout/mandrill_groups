@@ -328,7 +328,7 @@ function mandrill_groups_send_digest() {
               $comment_body = field_view_field('comment', $comment, 'comment_body');
               if ($comment->uid) {
                 $author = user_load($comment->uid);
-                $comment_name = entity_label('user', $author);
+                $comment_name = mandrill_groups_get_sender_name($author);
                 $attrib = $comment_name ? " Submitted by: $comment_name" : "";
               }
               $message_body[] = $comment_body[0]['#markup'] . $attrib . '<br>----------<br>';
@@ -897,7 +897,7 @@ function mandrill_groups_comment_insert($comment) {
   }
 
   $content = field_view_field('comment', $comment, 'comment_body');
-  $sender_name = entity_label('user', $author);
+  $sender_name = mandrill_groups_get_sender_name($author);
   $message = array(
     'id' => MANDRILL_GROUPS_DISCUSSION_NODE,
     'subject' => $node->title,
@@ -1106,6 +1106,20 @@ function mandrill_groups_og_permission() {
   return $permissions;
 }
 
+/**
+ * Helper function to get sender's name & allow other modules to alter it.
+ *
+ * @param object $author
+ *   Drupal user.
+ *
+ * @return string $sender_name
+ *   String to use for the sender's name.
+ */
+function mandrill_groups_get_sender_name($author) {
+  $sender_name = entity_label('user', $author);
+  drupal_alter('mandrill_groups_sender', $sender_name, $author);
+  return $sender_name;
+}
 
 /**
  * Helper function to determine if a user has access to edit a member's OG membership entity.
