@@ -277,6 +277,7 @@ function mandrill_groups_send_digest() {
   $groups = node_load_multiple(array_keys($result['node']));
   foreach ($groups as $group) {
     $message_body = array();
+    $message_header = array();
     $group_wrapper = entity_metadata_wrapper('node', $group);
     $group_id = $group_wrapper->getIdentifier();
     // Collect digest recipients.
@@ -302,15 +303,17 @@ function mandrill_groups_send_digest() {
     }
     $discussions = node_load_multiple($entities);
 
+    $message_header[] = '<h2>' . t('Recent discussion topics') . '</h2><ul>';
     // Get each discussion comment posted since our last digest went out.
     foreach ($discussions as $discussion) {
       $last_comment = new DateTime(format_date($discussion->last_comment_timestamp, 'custom', 'Y/m/d'));
       $yesterday = new DateTime("yesterday");
       // Load all comments from the previous day.
       if ($last_comment == $yesterday) {
-        $message_body[] = '<h2>' . $discussion->title . '</h2>';
         $path = 'node/' . $discussion->nid;
         $url = url($path, array('absolute' => TRUE));
+        $message_body[] = '<hr><h2>' . $discussion->title . '</h2>' . $url;
+        $message_header[] = '<li>' . $discussion->title . '<br> ' . $url . '</li>';
         $query = new EntityFieldQuery();
         $result = $query
           ->entityCondition('entity_type', 'comment', '=')
@@ -327,22 +330,23 @@ function mandrill_groups_send_digest() {
             if ($comment_wrapper->comment_body->value() && $comment_wrapper->comment_body->value->value()) {
               $comment_body = field_view_field('comment', $comment, 'comment_body');
               if ($comment->uid) {
+                $created = format_date($comment->created, 'medium');
                 $author = user_load($comment->uid);
                 $comment_name = mandrill_groups_get_sender_name($author);
-                $attrib = $comment_name ? " Submitted by: $comment_name" : "";
+                $attrib = $comment_name ? " Comment by: $comment_name on $created" : "";
               }
-              $message_body[] = $comment_body[0]['#markup'] . $attrib . '<br>----------<br>';
+              $message_body[] = '<br>----------<br>' . $attrib . $comment_body[0]['#markup'];
             }
           }
         }
-        $message_body[] = $url;
-        $message_body[] = '<hr>';
       }
     }
 
     // Send an email for each group.
     if (!empty($message_body)) {
-
+      // Finish off the header and insert it at beginning of body.
+      $message_header[] = '</ul>' . t("Below is a list of the previous day's comments, organized by topic.");
+      $message_body = array_merge($message_header, $message_body);
       $message = array(
         'id' => MANDRILL_GROUPS_DISCUSSION_NODE,
         'subject' => t('Daily Digest for Group @label', array('@label' => $group_wrapper->label())),
