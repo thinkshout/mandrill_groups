@@ -303,7 +303,7 @@ function mandrill_groups_send_digest() {
     }
     $discussions = node_load_multiple($entities);
 
-    $message_header[] = '<h2>' . t('Recent discussion topics') . '</h2><ul>';
+    $message_header[] = '<h2>' . t('Recent discussion topics') . '</h2>(' . t('To add to a discussion, follow the links and post your comment through the online group forum.') . ')<ul>';
     // Get each discussion comment posted since our last digest went out.
     foreach ($discussions as $discussion) {
       $last_comment = new DateTime(format_date($discussion->last_comment_timestamp, 'custom', 'Y/m/d'));
