@@ -312,7 +312,7 @@ function mandrill_groups_send_digest() {
       if ($last_comment == $yesterday) {
         $path = 'node/' . $discussion->nid;
         $url = url($path, array('absolute' => TRUE));
-        $message_body[] = '<hr><h2>' . $discussion->title . '</h2>' . $url;
+        $message_body[] = '<hr><h2>' . $discussion->title . '</h2>' . t('Full discussion') . ': ' . $url;
         $message_header[] = '<li>' . $discussion->title . '<br> ' . $url . '</li>';
         $query = new EntityFieldQuery();
         $result = $query
@@ -974,7 +974,6 @@ function mandrill_groups_comment_insert($comment) {
   if ($include_previous) {
     $result = comment_get_thread($node, COMMENT_MODE_THREADED, 22);
     if ($result) {
-      $message['body'][] = '<b>' . t('Previous Comments') . '</b><br>-----------------------<br>';
       $i = 0;
       foreach ($result as $key => $value) {
         if ($i == 20) {
@@ -984,15 +983,18 @@ function mandrill_groups_comment_insert($comment) {
         $current_comment = comment_load($value);
         // Do not include this most recent comment in the previous comment list.
         if ($current_comment->cid != $comment->cid) {
+          if ($i == 0) {
+            $message['body'][] = '<b>' . t('Previous Comments') . '</b><br>-----------------------<br>';
+          }
           $comment_wrap = entity_metadata_wrapper('comment', $value);
           // Fix for error in PHP before 5.5 as per
           // http://stackoverflow.com/questions/1075534/cant-use-method-return-value-in-write-context/4328049#4328049
           if ($comment_wrap->comment_body->value() && $comment_wrap->comment_body->value->value()) {
             $comment_body = field_view_field('comment', $current_comment, 'comment_body');
             if ($comment->uid) {
-              $created = format_date($comment->created, 'medium');
-              $author = user_load($comment->uid);
-              $comment_name = mandrill_groups_get_sender_name($author);
+              $created = format_date($current_comment->created, 'medium');
+              $comment_author = user_load($current_comment->uid);
+              $comment_name = mandrill_groups_get_sender_name($comment_author);
               $attrib = $comment_name ? " Comment by: $comment_name on $created" : "";
             }
             $message['body'][] = $attrib . $comment_body[0]['#markup'] . '<br>----------<br>';
@@ -1041,11 +1043,12 @@ function mandrill_groups_send_email($from, $addresses, $message, $group, $discus
 
   // Don't include the 'Reply above this line' or the link to individual post for digests.
   $pos = strpos($message['subject'], 'Daily Digest');
-  if($pos === false) {
+  if ($pos === false) {
     array_unshift($message['body'], MANDRILL_GROUPS_MESSAGE_SEPERATOR . '<br />');
     $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), $postscript_tokens);
 
-  } else {
+  }
+  else {
     $postscript_edit = str_replace("| View this discussion online at @discussion_link. <br/>\r\n", "", $group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value());
     $postscript = format_string($postscript_edit, $postscript_tokens);
 
