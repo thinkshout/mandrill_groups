@@ -972,10 +972,6 @@ function mandrill_groups_comment_insert($comment) {
   // Include previous comments on this topic if desired as per admin settings.
   $include_previous = variable_get('mandrill_groups_send_to_author', TRUE);
   if ($include_previous) {
-    // Can't use comment_get_thread function since we are showing comments in
-    // reverse chronologial order.
-    // $result = comment_get_thread($node, COMMENT_MODE_THREADED, 22);
-    // Get all comments on this topic.
     $comment_query = new EntityFieldQuery();
     $comment_query->entityCondition('entity_type', 'comment', '=')
       ->propertyCondition('nid', $node->nid, '=')
@@ -991,6 +987,7 @@ function mandrill_groups_comment_insert($comment) {
       $i = 0;
       foreach ($prev_comments as $current_comment) {
         if ($i == 0) {
+          // Print the header before the first comment.
           $message['body'][] = '<b>' . t('Previous Comments') . '</b><br>-----------------------<br>';
         }
         $comment_wrap = entity_metadata_wrapper('comment', $current_comment);
