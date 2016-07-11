@@ -972,35 +972,44 @@ function mandrill_groups_comment_insert($comment) {
   // Include previous comments on this topic if desired as per admin settings.
   $include_previous = variable_get('mandrill_groups_send_to_author', TRUE);
   if ($include_previous) {
-    $result = comment_get_thread($node, COMMENT_MODE_THREADED, 22);
+    // Can't use comment_get_thread function since we are showing comments in
+    // reverse chronologial order.
+    // $result = comment_get_thread($node, COMMENT_MODE_THREADED, 22);
+    // Get all comments on this topic.
+    $comment_query = new EntityFieldQuery();
+    $comment_query->entityCondition('entity_type', 'comment', '=')
+      ->propertyCondition('nid', $node->nid, '=')
+      ->propertyCondition('cid', $comment->cid, '!=')
+      ->propertyCondition('status', COMMENT_PUBLISHED)
+      ->propertyOrderBy('created', 'DESC')
+      ->addMetaData('account', user_load(1));
+
+    $result = $comment_query->execute();
+
     if ($result) {
+      $prev_comments = comment_load_multiple(array_keys($result['comment']));
       $i = 0;
-      foreach ($result as $key => $value) {
-        if ($i == 20) {
-          $message['body'][] = '<br>View all comments online: ' . $node_wrapper->url->value();
-          break;
+      foreach ($prev_comments as $current_comment) {
+        if ($i == 0) {
+          $message['body'][] = '<b>' . t('Previous Comments') . '</b><br>-----------------------<br>';
         }
-        $current_comment = comment_load($value);
-        // Do not include this most recent comment in the previous comment list.
-        if ($current_comment->cid != $comment->cid) {
-          if ($i == 0) {
-            $message['body'][] = '<b>' . t('Previous Comments') . '</b><br>-----------------------<br>';
+        $comment_wrap = entity_metadata_wrapper('comment', $current_comment);
+        // Fix for error in PHP before 5.5 as per
+        // http://stackoverflow.com/questions/1075534/cant-use-method-return-value-in-write-context/4328049#4328049
+        if ($comment_wrap && $comment_wrap->cid->value() && $comment_wrap->comment_body->value() && $comment_wrap->comment_body->value->value()) {
+          $comment_body = field_view_field('comment', $current_comment, 'comment_body');
+          if ($current_comment->uid) {
+            $created = format_date($current_comment->created, 'medium');
+            $comment_author = user_load($current_comment->uid);
+            $comment_name = mandrill_groups_get_sender_name($comment_author);
+            $attrib = $comment_name ? " Comment by: $comment_name on $created" : "";
           }
-          $comment_wrap = entity_metadata_wrapper('comment', $value);
-          // Fix for error in PHP before 5.5 as per
-          // http://stackoverflow.com/questions/1075534/cant-use-method-return-value-in-write-context/4328049#4328049
-          if ($comment_wrap->comment_body->value() && $comment_wrap->comment_body->value->value()) {
-            $comment_body = field_view_field('comment', $current_comment, 'comment_body');
-            if ($comment->uid) {
-              $created = format_date($current_comment->created, 'medium');
-              $comment_author = user_load($current_comment->uid);
-              $comment_name = mandrill_groups_get_sender_name($comment_author);
-              $attrib = $comment_name ? " Comment by: $comment_name on $created" : "";
-            }
-            $message['body'][] = $attrib . $comment_body[0]['#markup'] . '<br>----------<br>';
-          }
-          $i++;
+          $message['body'][] = $attrib . $comment_body[0]['#markup'] . '<br>----------<br>';
         }
+        $i++;
+      }
+      if ($node->comment_count > 20) {
+        $message['body'][] = '<br>View all comments online: ' . $node_wrapper->url->value();
       }
     }
   }
