@@ -363,7 +363,9 @@ function mandrill_groups_send_digest() {
         $message['subject'] = $group_wrapper->{MANDRILL_GROUPS_SUBJECT_FIELD}->value() . ' ' . $message['subject'];
       }
 
-      $from = $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value();
+      // $from = $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value();
+      list($from_user, $from_domain) = explode('@', $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value());
+      $from = $from_user . MANDRILL_GROUPS_EMAIL_SEPARATOR . 'daily-digest' . '@' . $from_domain;
       $message['mandrill']['header'][MANDRILL_GROUPS_IGNORE_HEADER] = 1;
       mandrill_groups_send_email($from, $recipients, $message, $group);
       $group_wrapper->{MANDRILL_GROUPS_FIELD_DIGEST_LAST_SENT}->set($today->getTimestamp());
@@ -625,6 +627,15 @@ function mandrill_groups_process_message($message) {
 
   // Load existing discussion, or create a new one:
   if ($discussion_id) {
+    // Fail if this is a reply to the daily digest.
+    if ($discussion_id == 'daily-digest') {
+      watchdog('mandrill_groups', 'Message from %email denied because it was a reply to the daily digest.',
+        array(
+          '%email' => $message['from_email'],
+        ));
+      return FALSE;
+    }
+
     $discussion = node_load($discussion_id);
 
     // Fail if the discussion cannot be loaded.
