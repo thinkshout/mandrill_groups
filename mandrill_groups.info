@@ -11,3 +11,5 @@ dependencies[] = og
 dependencies[] = og_ui
 dependencies[] = og_access
 dependencies[] = number
+
+files[] = mandrill_groups.rules.inc

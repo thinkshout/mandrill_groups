@@ -9,6 +9,7 @@ Drupal UI. Discussions can be participated in via Drupal or email.
 Integrations with other modules:
   * Flag - Users can "follow" discussions, prioritizing them in displays, if
 the Flag module is enabled. (https://www.drupal.org/project/flag)
+  * Rules - Invokes an event when a response to the daily digest is received.
 
 -- REQUIREMENTS --
 
