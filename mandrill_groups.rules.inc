@@ -19,6 +19,10 @@ function mandrill_groups_rules_event_info() {
         'type' => 'user',
         'label' => t('responding user'),
       ),
+      'mandrill_group' => array(
+        'type' => 'node',
+        'label' => t('mandrill group'),
+      ),
     ),
   );
 

@@ -635,7 +635,7 @@ function mandrill_groups_process_message($message) {
         ));
       // Invoke rules.
       if (module_exists('rules')) {
-        rules_invoke_event('mandrill_groups_digest_response', $user);
+        rules_invoke_event('mandrill_groups_digest_response', $user, $group);
       }
       return FALSE;
     }
