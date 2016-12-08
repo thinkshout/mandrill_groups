@@ -965,7 +965,7 @@ function mandrill_groups_comment_insert($comment) {
     $message['mandrill']['header']['Cc'] = $from;
     $message['mandrill']['header'][MANDRILL_GROUPS_IGNORE_HEADER] = 1;
 
-    $from = $author->mail;
+    $message['mandrill']['header']['Reply-To'] = $author->mail;
   }
 
   // Check for attachments:
