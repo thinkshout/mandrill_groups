@@ -956,15 +956,17 @@ function mandrill_groups_comment_insert($comment) {
   entity_save('comment', $comment);
 
   list($from_user, $from_domain) = explode('@', $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value());
-  $from = $from_user . MANDRILL_GROUPS_EMAIL_SEPARATOR . $node_wrapper->getIdentifier() . MANDRILL_GROUPS_EMAIL_SEPARATOR . $comment->cid . '@' . $from_domain;
+  // Set the from to be just the group email without the topic and comment ids.
+  // Set reply-to to include the topic and comment id.
+  $from = $from_user . '@' . $from_domain;
+  $message['mandrill']['header']['Reply-To'] = $from_user . MANDRILL_GROUPS_EMAIL_SEPARATOR . $node_wrapper->getIdentifier() . MANDRILL_GROUPS_EMAIL_SEPARATOR . $comment->cid . '@' . $from_domain;
 
   // Mandrill automatically puts the "From" into "Reply To" and replaces the
   // "From" with the official system email address.
   if ($group_wrapper->{MANDRILL_GROUPS_EMAIL_REPLY_TO}->value() == 'sender' && isset($author->mail)) {
     // Make sure to set the Cc to the group email before overriding with author.
-    $message['mandrill']['header']['Cc'] = $from;
+    $message['mandrill']['header']['Cc'] = $from_user . MANDRILL_GROUPS_EMAIL_SEPARATOR . $node_wrapper->getIdentifier() . MANDRILL_GROUPS_EMAIL_SEPARATOR . $comment->cid . '@' . $from_domain;
     $message['mandrill']['header'][MANDRILL_GROUPS_IGNORE_HEADER] = 1;
-
     $message['mandrill']['header']['Reply-To'] = $author->mail;
   }
 
