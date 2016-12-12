@@ -828,7 +828,7 @@ function _mandrill_groups_filter_reply($message) {
 function mandrill_groups_load_by_mail($email = NULL) {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'node')
-    ->propertyCondition('type', MANDRILL_GROUPS_GROUP_NODE, '=');
+        ->propertyCondition('type', MANDRILL_GROUPS_GROUP_NODE, '=');
   if ($email) {
     $query->fieldCondition('mandrill_groups_email', 'value', $email);
     // Run the query as user 1 in order to get private groups too.
@@ -956,16 +956,21 @@ function mandrill_groups_comment_insert($comment) {
   entity_save('comment', $comment);
 
   list($from_user, $from_domain) = explode('@', $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value());
-  $from = $from_user . MANDRILL_GROUPS_EMAIL_SEPARATOR . $node_wrapper->getIdentifier() . MANDRILL_GROUPS_EMAIL_SEPARATOR . $comment->cid . '@' . $from_domain;
+  // Change from address to be just the address without the comment and topic ids.
+  // Set the reply to address to include the whole thing with the id's.
+  $from = $group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value();
+  $message['mandrill']['header']['Reply-To'] = $from_user . MANDRILL_GROUPS_EMAIL_SEPARATOR . $node_wrapper->getIdentifier() . MANDRILL_GROUPS_EMAIL_SEPARATOR . $comment->cid . '@' . $from_domain;
 
   // Mandrill automatically puts the "From" into "Reply To" and replaces the
   // "From" with the official system email address.
   if ($group_wrapper->{MANDRILL_GROUPS_EMAIL_REPLY_TO}->value() == 'sender' && isset($author->mail)) {
     // Make sure to set the Cc to the group email before overriding with author.
-    $message['mandrill']['header']['Cc'] = $from;
+    // TODO When reply is to sender, we need to include the topic and comment id's on the CC.
+    $message['mandrill']['header']['Cc'] = $from_user . MANDRILL_GROUPS_EMAIL_SEPARATOR . $node_wrapper->getIdentifier() . MANDRILL_GROUPS_EMAIL_SEPARATOR . $comment->cid . '@' . $from_domain;
     $message['mandrill']['header'][MANDRILL_GROUPS_IGNORE_HEADER] = 1;
 
     $message['mandrill']['header']['Reply-To'] = $author->mail;
+
   }
 
   // Check for attachments:
@@ -989,11 +994,11 @@ function mandrill_groups_comment_insert($comment) {
   if ($include_previous) {
     $comment_query = new EntityFieldQuery();
     $comment_query->entityCondition('entity_type', 'comment', '=')
-      ->propertyCondition('nid', $node->nid, '=')
-      ->propertyCondition('cid', $comment->cid, '!=')
-      ->propertyCondition('status', COMMENT_PUBLISHED)
-      ->propertyOrderBy('created', 'DESC')
-      ->addMetaData('account', user_load(1));
+                  ->propertyCondition('nid', $node->nid, '=')
+                  ->propertyCondition('cid', $comment->cid, '!=')
+                  ->propertyCondition('status', COMMENT_PUBLISHED)
+                  ->propertyOrderBy('created', 'DESC')
+                  ->addMetaData('account', user_load(1));
 
     $result = $comment_query->execute();
 
