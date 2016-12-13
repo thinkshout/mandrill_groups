@@ -360,7 +360,7 @@ function mandrill_groups_field_definitions() {
         ),
         'required' => 1,
         'default_value' => array(array('value' => 'group')),
-        'description' => t('When replying to group emails, who should the email go to?'),
+        'description' => t('When replying to group emails, who should the email go to? When options is set to "Sender," users may still use the reply-all function of their email client to post to the group.'),
       ),
     ),
     MANDRILL_GROUPS_EMAIL_FREQUENCY_FIELD => array(
@@ -563,4 +563,15 @@ function mandrill_groups_update_7100() {
   $comment_subject_field_definition = $schema['comment']['fields']['subject'];
   $comment_subject_field_definition['length'] = 255;
   db_change_field('comment', 'subject', 'subject', $comment_subject_field_definition);
+}
+
+/**
+ * Implements hook_update_N().
+ *
+ * Changes the description text on reply option field.
+ */
+function mandrill_groups_update_7101() {
+  $instance_info = field_info_instance('node', MANDRILL_GROUPS_EMAIL_REPLY_TO, MANDRILL_GROUPS_GROUP_NODE);
+  $instance_info['description'] = t('When replying to group emails, who should the email go to? When options is set to "Sender," users may still use the reply-all function of their email client to post to the group.');
+  field_update_instance($instance_info);
 }

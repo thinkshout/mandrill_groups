@@ -965,12 +965,18 @@ function mandrill_groups_comment_insert($comment) {
   // "From" with the official system email address.
   if ($group_wrapper->{MANDRILL_GROUPS_EMAIL_REPLY_TO}->value() == 'sender' && isset($author->mail)) {
     // Make sure to set the Cc to the group email before overriding with author.
-    // TODO When reply is to sender, we need to include the topic and comment id's on the CC.
+    // When reply is to sender, we need to include the topic and comment id's on the CC.
     $message['mandrill']['header']['Cc'] = $from_user . MANDRILL_GROUPS_EMAIL_SEPARATOR . $node_wrapper->getIdentifier() . MANDRILL_GROUPS_EMAIL_SEPARATOR . $comment->cid . '@' . $from_domain;
+    // Set preserve_recipents to TRUE so user's will see the CC in order to reply-all.
+    $message['mandrill']['overrides']['preserve_recipients'] = TRUE;
+
     $message['mandrill']['header'][MANDRILL_GROUPS_IGNORE_HEADER] = 1;
 
     $message['mandrill']['header']['Reply-To'] = $author->mail;
-
+    // TODO When an email comes in when someone does reply all, we must figure out
+    // a way to NOT send it to the original recipient twice. Original thought was to
+    // add a third param on the reply to that includes the id of sender so we can
+    // not include that person.
   }
 
   // Check for attachments:
