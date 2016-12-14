@@ -981,11 +981,16 @@ function mandrill_groups_comment_insert($comment) {
 
     // Also check to see if there is an address to exclude and remove it from the addresses array.
     if ($exclude_id) {
-      // Search
-      $pos = array_search($exclude_id, $addresses);
-      if ($pos !== false) {
-        // Remove from array
-        unset($addresses[$pos]);
+      // Load the email address for that id and remove it from the list.
+      $exclude_user = user_load($exclude_id);
+      if ($exclude_user) {
+        // Search
+        $exclude_email = $exclude_user->mail;
+        $pos = array_search($exclude_email, $addresses);
+        if ($pos !== FALSE) {
+          // Remove from array
+          unset($addresses[$pos]);
+        }
       }
     }
   }
