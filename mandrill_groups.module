@@ -562,6 +562,13 @@ function mandrill_groups_process_message($message) {
   if (!empty($message['headers'][MANDRILL_GROUPS_IGNORE_HEADER])) {
     return FALSE;
   }
+  // Ignore any auto-reply emails
+  if (!empty($message['headers']['X-Autoreply']) ||
+      !empty($message['headers']['X-Autorespond']) ||
+      (!empty($message['headers']['Auto-Submitted']) && $message['headers']['Auto-Submitted'] == 'auto-replied')
+  ) {
+    return FALSE;
+  }
 
   $user = user_load_by_mail($message['from_email']);
 
