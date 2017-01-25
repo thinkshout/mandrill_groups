@@ -563,9 +563,10 @@ function mandrill_groups_process_message($message) {
     return FALSE;
   }
   // Ignore any auto-reply emails
+  $autosubmit = array('auto-replied', 'auto-generated');
   if (!empty($message['headers']['X-Autoreply']) ||
       !empty($message['headers']['X-Autorespond']) ||
-      (!empty($message['headers']['Auto-Submitted']) && $message['headers']['Auto-Submitted'] == 'auto-replied')
+      (!empty($message['headers']['Auto-Submitted']) && in_array($message['headers']['Auto-Submitted'], $autosubmit))
   ) {
     return FALSE;
   }
