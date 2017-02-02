@@ -570,7 +570,7 @@ function mandrill_groups_process_message($message) {
   ) {
     return FALSE;
   }
-  // If the blocked subject variable is set, Ignore any emails with the blocked text in the subject.
+  // If the blocked subject variable is set, ignore any emails with the blocked text in the subject.
   $blocked = variable_get('mandrill_groups_block_subject');
   if (!empty($blocked) && isset($message['subject'])) {
     if (strpos($message['subject'], $blocked) !== false) {
