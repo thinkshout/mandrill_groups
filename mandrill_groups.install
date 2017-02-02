@@ -575,3 +575,15 @@ function mandrill_groups_update_7101() {
   $instance_info['description'] = t('When replying to group emails, who should the email go to? When options is set to "Sender," users may still use the reply-all function of their email client to post to the group.');
   field_update_instance($instance_info);
 }
+
+/**
+ * Implements hook_update_N().
+ *
+ * Sets the blocked subject variable if not already set.
+ */
+function mandrill_groups_update_7102() {
+  $blocked = variable_get('mandrill_groups_block_subject');
+  if (is_null($blocked)) {
+    variable_set('mandrill_groups_block_subject', 'Automatic reply:');
+  }
+}
