@@ -134,10 +134,10 @@ function mandrill_groups_settings_form($form, &$form_state) {
   );
 
   $form['mandrill_groups_block_subject'] = array(
-      '#type' => 'textfield',
+      '#type' => 'textarea',
       '#title' => t('Blocked subject'),
-      '#default_value' => variable_get('mandrill_groups_block_subject', 'Automatic reply:'),
-      '#description' => t("Mandrill Groups will filter out messages with 'X-Autoreply’, 'X-Autorespond’ headers, or with 'Auto-Submitted’ set to 'auto-replied’ or ‘auto-generated.' Some email clients do not include these headers, so this field is provided so Mandrill Groups can also block replies that contain this text in the subject line."),
+      '#default_value' => variable_get('mandrill_groups_block_subject', "Automatic reply\rOut of office\rAUTO"),
+      '#description' => t("Enter one item per line. Do not use quotes. Mandrill Groups will filter out messages with 'X-Autoreply’, 'X-Autorespond’ headers, or with 'Auto-Submitted’ set to 'auto-replied’ or ‘auto-generated.' Some email clients do not include these headers, so this field is provided so Mandrill Groups can also block replies that contain this text in the subject line."),
       '#required' => FALSE,
   );
 

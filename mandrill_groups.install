@@ -584,6 +584,6 @@ function mandrill_groups_update_7101() {
 function mandrill_groups_update_7102() {
   $blocked = variable_get('mandrill_groups_block_subject');
   if (is_null($blocked)) {
-    variable_set('mandrill_groups_block_subject', 'Automatic reply:');
+    variable_set('mandrill_groups_block_subject', "Automatic reply\r\nOut of office\r\nAUTO");
   }
 }
