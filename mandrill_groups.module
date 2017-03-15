@@ -12,6 +12,7 @@ define('MANDRILL_GROUPS_SUBJECT_FIELD', 'mandrill_groups_subject_prefix');
 define('MANDRILL_GROUPS_EMAIL_REPLY_TO', 'mandrill_groups_email_reply_to');
 define('MANDRILL_GROUPS_MEMBERSHIP_TYPE', 'mandrill_groups_membership_type');
 define('MANDRILL_GROUPS_POSTSCRIPT_FIELD', 'mandrill_groups_postscript');
+define('MANDRILL_GROUPS_DIGEST_POSTSCRIPT_FIELD', 'mandrill_groups_digest_ps');
 define('MANDRILL_GROUPS_GROUP_NODE', 'mandrill_groups_group');
 define('MANDRILL_GROUPS_DISCUSSION_NODE', 'mandrill_groups_discussion');
 define('MANDRILL_GROUPS_MESSAGE_ID_FIELD', 'mandrill_groups_last_message_id');
@@ -1110,15 +1111,12 @@ function mandrill_groups_send_email($from, $addresses, $message, $group, $discus
 
   // Don't include the 'Reply above this line' or the link to individual post for digests.
   $pos = strpos($message['subject'], 'Daily Digest');
-  if ($pos === false) {
+  if ($pos === FALSE) {
     array_unshift($message['body'], MANDRILL_GROUPS_MESSAGE_SEPERATOR . '<br />');
     $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value(), $postscript_tokens);
-
   }
   else {
-    $postscript_edit = str_replace("| View this discussion online at @discussion_link. <br/>\r\n", "", $group_wrapper->{MANDRILL_GROUPS_POSTSCRIPT_FIELD}->value());
-    $postscript = format_string($postscript_edit, $postscript_tokens);
-
+    $postscript = format_string($group_wrapper->{MANDRILL_GROUPS_DIGEST_POSTSCRIPT_FIELD}->value(), $postscript_tokens);
   }
   $message['body'][] = $postscript;
 
