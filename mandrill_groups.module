@@ -960,7 +960,7 @@ function mandrill_groups_comment_insert($comment) {
         'List-Post:' => "<mailto:{$group_wrapper->{MANDRILL_GROUPS_EMAIL_FIELD}->value()}",
         'List-Owner:' => "<mailto:{$group_wrapper->author->mail->value()}",
       ),
-      'from_name' => $sender_name . ' via ' . variable_get('site_name', 'Drupal Site'),
+      'from_name' => strip_tags($sender_name) . ' via ' . variable_get('site_name', 'Drupal Site'),
       'overrides' => array(
         'preserve_recipients' => FALSE,
       ),
