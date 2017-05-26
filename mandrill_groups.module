@@ -415,16 +415,23 @@ function mandrill_groups_process_webhook() {
 
   $events = drupal_json_decode($_POST['mandrill_events']);
   foreach ($events as $event) {
-    // Process events:
-    switch ($event['event']) {
-      case 'hard_bounce':
-      case 'reject':
-        mandrill_groups_process_bounce($event['msg']);
-        break;
+    try {
+      // Process events:
+      switch ($event['event']) {
+        case 'hard_bounce':
+        case 'reject':
+          mandrill_groups_process_bounce($event['msg']);
+          break;
 
-      case 'inbound':
-        mandrill_groups_process_message($event['msg']);
-        break;
+        case 'inbound':
+          mandrill_groups_process_message($event['msg']);
+          break;
+      }
+    } catch(Exception $e) {
+      watchdog('mandrill_groups', 'Error processing webhook. %msg',
+        array(
+          '%msg' => $e->getMessage(),
+        ));
     }
   }
   return count($events) . " events processed.";
@@ -1019,14 +1026,26 @@ function mandrill_groups_comment_insert($comment) {
   if ($comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD} && count($comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->value())) {
     $attachment_values = $comment_wrapper->{MANDRILL_GROUPS_ATTACHMENT_FIELD}->value();
     $message['attachments'] = array();
+    $mandrillMail = new MandrillMailSystem();
     foreach ($attachment_values as $file_info) {
       $file = file_load($file_info['fid']);
       $label = empty($file_info['description']) ? $file->filename : $file_info['description'];
-      if ($file->filesize < 1000000 * $node_wrapper->{OG_AUDIENCE_FIELD}->{MANDRILL_GROUPS_ATTACHMENT_SENDLIMIT}->value()) {
-        $message['attachments'][] = array('uri' => $file->uri);
+      // Check to see if this is a valid file type before attaching to email.
+      if ($mandrillMail->isValidContentType($file->filemime)) {
+        if ($file->filesize < 1000000 * $node_wrapper->{OG_AUDIENCE_FIELD}->{MANDRILL_GROUPS_ATTACHMENT_SENDLIMIT}->value()) {
+          $message['attachments'][] = array('uri' => $file->uri);
+        }
+        else {
+          $message['body'][] = l($label, file_create_url($file->uri)) . '<br />';
+        }
       }
       else {
-        $message['body'][] = l($label, file_create_url($file->uri)) . '<br />';
+        watchdog('mandrill_groups', 'Attachment %name from %author not included, because %type is not an allowed file type.',
+          array(
+            '%author' => $author->mail,
+            '%name' => $file->filename,
+            '%type' => $file->filemime,
+          ));
       }
     }
   }
