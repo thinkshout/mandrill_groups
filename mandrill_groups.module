@@ -1069,7 +1069,7 @@ function mandrill_groups_comment_insert($comment) {
       foreach ($prev_comments as $current_comment) {
         if ($i == 0) {
           // Print the header before the first comment.
-          $message['body'][] = '<b>' . t('Previous Comments') . '</b><br>-----------------------<br>';
+          $message['body'][] = '<hr><strong>' . t('PREVIOUS COMMENTS') . '</strong><br>----------------------------------------------------------------------------<br>';
         }
         $comment_wrap = entity_metadata_wrapper('comment', $current_comment);
         // Fix for error in PHP before 5.5 as per
@@ -1080,9 +1080,9 @@ function mandrill_groups_comment_insert($comment) {
             $created = format_date($current_comment->created, 'medium');
             $comment_author = user_load($current_comment->uid);
             $comment_name = mandrill_groups_get_sender_name($comment_author);
-            $attrib = $comment_name ? " Comment by: $comment_name on $created" : "";
+            $attrib = $comment_name ? " <strong>Comment by: $comment_name on $created </strong>" : "";
           }
-          $message['body'][] = $attrib . $comment_body[0]['#markup'] . '<br>----------<br>';
+          $message['body'][] = $attrib . $comment_body[0]['#markup'] . '<br>----------------------------------------------------------------------------<br>';
         }
         $i++;
       }
