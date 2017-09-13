@@ -337,9 +337,9 @@ function mandrill_groups_send_digest() {
                 $created = format_date($comment->created, 'medium');
                 $author = user_load($comment->uid);
                 $comment_name = mandrill_groups_get_sender_name($author);
-                $attrib = $comment_name ? " Comment by: $comment_name on $created" : "";
+                $attrib = $comment_name ? " <strong>Comment by: $comment_name on $created </strong>" : "";
               }
-              $message_body[] = '<br>----------<br>' . $attrib . $comment_body[0]['#markup'];
+              $message_body[] = '<br>----------------------------------------------------------------------------<br>' . $attrib . $comment_body[0]['#markup'];
             }
           }
         }
