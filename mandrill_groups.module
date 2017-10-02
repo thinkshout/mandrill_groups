@@ -656,8 +656,30 @@ function mandrill_groups_process_message($message) {
   }
   $mandrill_groups_original_msg_id = isset($message['headers']['Message-Id']) ? $message['headers']['Message-Id'] : NULL;
 
-  // Load existing discussion, or create a new one:
+  // Perform some extra checks to make sure this is really a reply instead of
+  // someone accidentally replying with a discussion id.
   if ($discussion_id) {
+    // Start out assuming it is a reply since we have an id,
+    // unless it fails the next few checks.
+    $is_reply = TRUE;
+    // If no "-------- Reply Above This Line --------"
+    if (strpos($comment_body_value, MANDRILL_GROUPS_MESSAGE_SEPERATOR) === FALSE) {
+      // And if no RE: or FW: in subject
+      if(isset($message['subject']) && stripos($message['subject'], "RE:") === FALSE && stripos($message['subject'], "FW:") === FALSE) {
+        // And if subject does not match thread subject
+        if($discussion_id != 'daily-digest') {
+          $discussion = node_load($discussion_id);
+          if($discussion && $discussion->title != $message['subject']) {
+            // Assume it is not a reply
+            $is_reply = FALSE;
+          }
+        }
+      }
+    }
+  }
+
+  // Load existing discussion, or create a new one:
+  if ($discussion_id && $is_reply) {
     // Fail if this is a reply to the daily digest.
     if ($discussion_id == 'daily-digest') {
       watchdog('mandrill_groups', 'Message from %email denied because it was a reply to the daily digest.',
@@ -671,7 +693,10 @@ function mandrill_groups_process_message($message) {
       return FALSE;
     }
 
-    $discussion = node_load($discussion_id);
+    // Only need to load the discussion if we didn't already during reply check.
+    if(!isset($discussion)) {
+      $discussion = node_load($discussion_id);
+    }
 
     // Fail if the discussion cannot be loaded.
     if (!$discussion) {
