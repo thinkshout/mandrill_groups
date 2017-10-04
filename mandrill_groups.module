@@ -1245,8 +1245,6 @@ function mandrill_groups_og_permission() {
 /**
  * Helper function to determine if an incoming message is actually a reply.
  *
- * @param mixed $discussion_id
- *
  * @param string $subject
  *
  * @param string $comment_body
