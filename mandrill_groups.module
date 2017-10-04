@@ -676,15 +676,15 @@ function mandrill_groups_process_message($message) {
     if (is_numeric($discussion_id)) {
       // Load the discussion and check if reply.
       $discussion = node_load($discussion_id);
-      $is_reply = _mandrill_groups_is_reply($discussion_id, $message['subject'], $comment_body_value, $discussion);
+      $is_reply = _mandrill_groups_is_reply($message['subject'], $comment_body_value, $discussion);
     }
 
   }
 
-  // Use existing discussion, or create a new one:
-  if (isset($discussion) && $is_reply) {
+  // Check if reply
+  if ($is_reply) {
 
-    // Fail if the discussion if FALSE.
+    // Fail if the discussion if FALSE. Discussion may have been deleted.
     if (!$discussion) {
       watchdog('mandrill_groups', 'Message from %email for discussion %discussion denied because that discussion does not exist.',
         array(
@@ -1256,7 +1256,7 @@ function mandrill_groups_og_permission() {
  *
  * @return boolean
  */
-function _mandrill_groups_is_reply($discussion_id, $subject, $comment_body, $discussion = FALSE) {
+function _mandrill_groups_is_reply($subject, $comment_body, $discussion) {
   // Check for "-------- Reply Above This Line --------"
   if (strpos($comment_body, MANDRILL_GROUPS_MESSAGE_SEPERATOR) !== FALSE) {
     return TRUE;
@@ -1266,8 +1266,8 @@ function _mandrill_groups_is_reply($discussion_id, $subject, $comment_body, $dis
     return TRUE;
   }
   if ($discussion) {
-    // Check if subject lines match
-    if($discussion->title == $subject) {
+    // Check if discussion title is found in subject.
+    if (stripos($subject, $discussion->title) !== FALSE) {
       return TRUE;
     }
   }
